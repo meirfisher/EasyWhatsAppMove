@@ -1,33 +1,39 @@
 package com.mfr.movewaeasy.viewmodels
 
+
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
+import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class BackupViewModel : ViewModel() {
-
-    // Data class to hold the backup progress
     data class BackupState(
-        val foderSize: Long = 0L, // Bytes
+        val folderSize: Long = 0L, // Bytes
         val freeSpace: Long = 0L,
         val progress: Float = 0f, // 0 to 1
         val isCompressing: Boolean = false,
         val errorMessage: String? = null
     )
-    private val _state = MutableStateFlow(BackupState())
-    val state: StateFlow<BackupState> = _state
+    private val _backupState = MutableStateFlow(BackupState())
+    val backupState: StateFlow<BackupState> = _backupState
 
     init {
-        val folderPath = "Android/media/com.whatsapp/WhatsApp"
-        _state.value = _state.value.copy(
-            foderSize = getFolderSize(folderPath),
+        val whatsappPath = "Android/media/com.whatsapp/WhatsApp"
+        _backupState.value = _backupState.value.copy(
+            folderSize = getFolderSize(whatsappPath),
             freeSpace = getFreeSpace()
         )
+
     }
 
-    fun startBackup() {
-        _state.value = _state.value.copy(isCompressing = true)
-        // Start the backup process
 
+    fun startBackup() {
+        viewModelScope.launch {
+            _backupState.value = _backupState.value.copy(isCompressing = true)
+            // Compression logic with ZipUtils
+        }
     }
 }
