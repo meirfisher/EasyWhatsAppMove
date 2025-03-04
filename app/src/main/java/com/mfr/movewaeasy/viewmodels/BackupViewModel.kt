@@ -23,7 +23,7 @@ class BackupViewModel : ViewModel() {
     private val _state = MutableStateFlow(BackupState())
     val backupState: StateFlow<BackupState> = _state
     // Paths for the folders
-    private val sourceDir = FileUtils.getWhatsAppFolderPath()
+    private val sourceDir = FileUtils.getWhatsAppFolder()
     private val backupFile = FileUtils.getDestinationBackupFile()
 
     init {

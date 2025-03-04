@@ -2,6 +2,7 @@ package com.mfr.movewaeasy.utils
 
 import android.os.Environment
 import android.os.StatFs
+import android.util.Log
 import com.mfr.movewaeasy.R.string.whatsapp_folder_path
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.format.DateTimeFormatter
@@ -10,15 +11,15 @@ import java.io.File
 object FileUtils {
 
     private const val GB = 1024f * 1024f * 1024f
-    private val whatsappFolderPath = whatsapp_folder_path.toString()
+    private const val WHATSAPP_FOLDER_PATH = "Android/media/com.whatsapp/WhatsApp"
     private const val BACKUP_FOLDER_PATH = "WhatsAppTransfer"
     private val DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
 
     // Func to get the path to the WhatsApp folder
-    fun getWhatsAppFolderPath(): File {
+    fun getWhatsAppFolder(): File {
         return File(
             Environment.getExternalStorageDirectory(),
-            whatsappFolderPath
+            WHATSAPP_FOLDER_PATH
         )
     }
 
