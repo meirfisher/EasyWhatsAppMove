@@ -6,10 +6,13 @@ import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
+import java.io.FileInputStream
+import java.util.zip.ZipInputStream
 
 
 object ZipUtils {
 
+    // Function to compress a folder and save it to a zip file, with progress updates
     fun compressFolder(sourcePath: String, destinationPath: String, onProgress: (Float) -> Unit) {
         val sourceFolder = File(sourcePath)
         val totalSize = getFolderSize(sourcePath)
@@ -41,6 +44,33 @@ object ZipUtils {
                     onProgress(progress)
                     zipOut.closeEntry()
                 }
+            }
+        }
+    }
+
+    // Function to unzip the backup file, with progress updates
+    fun extractZip(sourcePath: String, destinationPath: String, onProgress: (Float) -> Unit) {
+        val zipFile = File(sourcePath)
+        val totalSize = zipFile.length()
+        var processedBytes = 0L
+        ZipInputStream(FileInputStream(zipFile)).use { zipIn ->
+            var entry: ZipEntry? = zipIn.nextEntry
+            while (entry != null) {
+                val destFile = File(destinationPath, entry.name)
+                if (entry.isDirectory) {
+                    destFile.mkdirs()
+                } else {
+                    destFile.parentFile?.mkdirs()
+                    FileOutputStream(destFile).use { output ->
+                        zipIn.copyTo(output)
+                    }
+                }
+                processedBytes += entry.size
+                val progress = processedBytes.toFloat() / totalSize
+                Log.d("Zip", "Extract Progress: $progress")
+                onProgress(progress)
+                zipIn.closeEntry()
+                entry = zipIn.nextEntry
             }
         }
     }

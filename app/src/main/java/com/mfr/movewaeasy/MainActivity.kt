@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.mfr.movewaeasy.ui.screens.BackupScreen
 import com.mfr.movewaeasy.ui.screens.MainScreen
 import com.mfr.movewaeasy.ui.screens.PermissionScreen
+import com.mfr.movewaeasy.ui.screens.RestoreScreen
 import com.mfr.movewaeasy.ui.theme.MoveWAEasyTheme
 import com.mfr.movewaeasy.utils.PermissionUtils
 import com.mfr.movewaeasy.utils.PermissionUtils.hasPermissions
@@ -27,7 +28,7 @@ class MainActivity : ComponentActivity() {
                     composable("permission") {  PermissionScreen(navController)  }
                     composable("main") { MainScreen(navController) }
                     composable("backup") { BackupScreen(navController) }
-                    composable("restore") { /*RestoreScreen(navController)*/ }
+                    composable("restore") { RestoreScreen(navController) }
                 }
             }
         }

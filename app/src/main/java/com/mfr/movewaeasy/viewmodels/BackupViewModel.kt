@@ -4,6 +4,7 @@ package com.mfr.movewaeasy.viewmodels
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mfr.movewaeasy.R.string.whatsapp_folder_path
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
 import com.mfr.movewaeasy.utils.ZipUtils.compressFolder
@@ -20,13 +21,14 @@ class BackupViewModel : ViewModel() {
         val isCompressing: Boolean = false,
         val errorMessage: String? = null
     )
+    private val _state = MutableStateFlow(BackupState())
+    val backupState: StateFlow<BackupState> = _state
+    // Paths for the folders
     private val whatsappPath = Environment.getExternalStorageDirectory().path +
-            "/Android/media/com.whatsapp/WhatsApp"
+            whatsapp_folder_path
     private val backupPath = Environment.getExternalStoragePublicDirectory(
         Environment.DIRECTORY_DOCUMENTS
     ).path + "/WhatsAppTransfer/backup.zip"
-    private val _state = MutableStateFlow(BackupState())
-    val backupState: StateFlow<BackupState> = _state
 
     init {
         _state.value = _state.value.copy(
