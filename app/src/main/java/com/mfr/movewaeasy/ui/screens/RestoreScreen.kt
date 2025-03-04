@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -19,13 +20,14 @@ import com.mfr.movewaeasy.viewmodels.RestoreViewModel
 
 @Composable
 fun RestoreScreen(navController: NavController) {
+    val context = LocalContext.current
     val viewModel: RestoreViewModel = viewModel()
     val state by viewModel.state.collectAsState()
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.path?.let { viewModel.setBackupFile(it) }
+        uri?.let { viewModel.setBackupFile(context, it) }
     }
 
     Column(modifier = Modifier.padding(16.dp)) {

@@ -48,11 +48,10 @@ object ZipUtils {
     }
 
     // Function to unzip the backup file, with progress updates
-    fun extractZip(sourcePath: String, destinationPath: String, onProgress: (Float) -> Unit) {
-        val zipFile = File(sourcePath)
-        val totalSize = zipFile.length()
+    fun extractZip(sourceFile: File, destinationPath: String, onProgress: (Float) -> Unit) {
+        val totalSize = sourceFile.length()
         var processedBytes = 0L
-        ZipInputStream(FileInputStream(zipFile)).use { zipIn ->
+        ZipInputStream(FileInputStream(sourceFile)).use { zipIn ->
             var entry: ZipEntry? = zipIn.nextEntry
             while (entry != null) {
                 val destFile = File(destinationPath, entry.name)

@@ -1,5 +1,7 @@
 package com.mfr.movewaeasy.viewmodels
 
+import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -17,7 +19,8 @@ class RestoreViewModel : ViewModel() {
     // Data classes for UI state
     data class RestoreState(
         val isFileSelected: Boolean = false,
-        val filePath: String? = null, // Null when until file is selected
+        val uri: Uri? = null,
+        val filePath: File? = null, // Null when until file is selected
         val fileSize: Long = 0L,
         val creationTime: Long = 0L, // Milliseconds since epoch
         val progress: Float = 0f,
@@ -32,8 +35,8 @@ class RestoreViewModel : ViewModel() {
             whatsapp_folder_path
 
     // Function to set and Update state with file details when selected.
-    fun setBackupFile(filePath: String) {
-        val file = File(filePath)
+    fun setBackupFile(context: Context, uri: Uri) {
+        val file = filePath
         Log.d("Restore", "File Selected: $filePath, file size: ${file.length()}, creation time: ${file.lastModified()}")
         _state.value = _state.value.copy(
             filePath = filePath,
@@ -50,7 +53,7 @@ class RestoreViewModel : ViewModel() {
             _state.value = _state.value.copy(isRestoring = true)
             // Perform the restore logic here
             extractZip(
-                sourcePath = filePath,
+                sourceFile = filePath,
                 destinationPath = destPath,
                 onProgress = { progress ->
                     _state.value = _state.value.copy(progress = progress)
