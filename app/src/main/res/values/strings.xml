@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Move WhatsApp Easy</string>
+    <string name="app_name">Move WA Easy</string>
+    <string name="permission_request_text">Please grant the storage permission to access your WhatsApp media files for backup and restore operations.</string>
+    <string name="permission_request_button">Grant Permission</string>
 </resources>
