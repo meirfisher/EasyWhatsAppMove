@@ -3,6 +3,7 @@ package com.mfr.movewaeasy
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.navigation.Navigation.findNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,12 +16,15 @@ import com.mfr.movewaeasy.utils.PermissionUtils
 import com.mfr.movewaeasy.utils.PermissionUtils.hasPermissions
 
 class MainActivity : ComponentActivity() {
+
+    // Check if the app has the required permissions
+    private val startDestination = if (hasPermissions(this)) "main" else "permission"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MoveWAEasyTheme {
                 val navController = rememberNavController()
-                val startDestination = if (hasPermissions(this)) "main" else "permission"
                 NavHost(
                     navController = navController,
                     startDestination = startDestination
@@ -32,15 +36,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray,
-        deviceId: Int
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId)
     }
 }
 

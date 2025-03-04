@@ -11,11 +11,11 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 
 object PermissionUtils {
-    private val readWritePermission = arrayOf(
+    val readWritePermission = arrayOf(
         android.Manifest.permission.READ_EXTERNAL_STORAGE,
         android.Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
-    private const val PERMISSION_REQUEST_CODE = 100
+        const val PERMISSION_REQUEST_CODE = 100
 
     /*
     / Function to check if the app has the required permissions
@@ -92,6 +92,6 @@ object PermissionUtils {
     /*
      * Function to check android version
      */
-    private fun isAndroid11OrAbove(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+    fun isAndroid11OrAbove(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 }
 
