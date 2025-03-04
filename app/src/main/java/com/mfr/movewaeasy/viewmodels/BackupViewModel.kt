@@ -1,10 +1,13 @@
 package com.mfr.movewaeasy.viewmodels
 
 
+import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
+import com.mfr.movewaeasy.utils.ZipUtils.compressFolder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -17,12 +20,16 @@ class BackupViewModel : ViewModel() {
         val isCompressing: Boolean = false,
         val errorMessage: String? = null
     )
-    private val _backupState = MutableStateFlow(BackupState())
-    val backupState: StateFlow<BackupState> = _backupState
+    private val whatsappPath = Environment.getExternalStorageDirectory().path +
+            "/Android/media/com.whatsapp/WhatsApp"
+    private val backupPath = Environment.getExternalStoragePublicDirectory(
+        Environment.DIRECTORY_DOCUMENTS
+    ).path + "/WhatsAppTransfer/backup.zip"
+    private val _state = MutableStateFlow(BackupState())
+    val backupState: StateFlow<BackupState> = _state
 
     init {
-        val whatsappPath = "Android/media/com.whatsapp/WhatsApp"
-        _backupState.value = _backupState.value.copy(
+        _state.value = _state.value.copy(
             folderSize = getFolderSize(whatsappPath),
             freeSpace = getFreeSpace()
         )
@@ -31,9 +38,16 @@ class BackupViewModel : ViewModel() {
 
 
     fun startBackup() {
-        viewModelScope.launch {
-            _backupState.value = _backupState.value.copy(isCompressing = true)
-            // Compression logic with ZipUtils
+        viewModelScope.launch (Dispatchers.IO) {
+            _state.value = _state.value.copy(isCompressing = true)
+            compressFolder(
+                sourcePath = whatsappPath,
+                destinationPath = backupPath,
+                onProgress = { progress ->
+                    _state.value = _state.value.copy(progress = progress)
+                }
+            )
+            _state.value = _state.value.copy(isCompressing = false)
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.mfr.movewaeasy.utils
 
+import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
@@ -9,10 +10,13 @@ import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 
 object ZipUtils {
 
-    fun CompressFolder(sourcePath: String, destinationPath: String, onProgress: (Float) -> Unit) {
+    fun compressFolder(sourcePath: String, destinationPath: String, onProgress: (Float) -> Unit) {
         val sourceFolder = File(sourcePath)
         val totalSize = getFolderSize(sourcePath)
-        if (totalSize == 0L) return // Exit if the folder is empty or doesn't exist
+        if (totalSize == 0L) {
+            Log.d("Zip", "Empty folder or doesn't exist $sourcePath")
+            return
+        } // Exit if the folder is empty or doesn't exist
 
         val destFile = File(destinationPath)
         destFile.parentFile?.mkdirs()
@@ -32,7 +36,9 @@ object ZipUtils {
                         }
                     }
                     processedBytes += file.length()
-                    onProgress(processedBytes.toFloat() / totalSize.toFloat())
+                    val progress = processedBytes.toFloat() / totalSize
+                    Log.d("Zip", "Progress: $progress")
+                    onProgress(progress)
                     zipOut.closeEntry()
                 }
             }

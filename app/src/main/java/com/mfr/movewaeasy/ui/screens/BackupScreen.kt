@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.mfr.movewaeasy.utils.FileUtils.convertBytesToGB
 import com.mfr.movewaeasy.viewmodels.BackupViewModel
 
 @Composable
@@ -20,8 +21,8 @@ fun BackupScreen(navController: NavController) {
     val state by viewModel.backupState.collectAsState()
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("Folder Size: ${state.folderSize}")
-        Text("Free Space: ${state.freeSpace}")
+        Text("Folder Size: ${convertBytesToGB(state.folderSize)}")
+        Text("Free Space: ${convertBytesToGB(state.freeSpace)}")
         if (state.isCompressing) {
             LinearProgressIndicator(
                 progress = { state.progress },
