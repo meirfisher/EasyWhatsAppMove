@@ -1,10 +1,9 @@
 package com.mfr.movewaeasy.viewmodels
 
 
-import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mfr.movewaeasy.R.string.whatsapp_folder_path
+import com.mfr.movewaeasy.utils.FileUtils
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
 import com.mfr.movewaeasy.utils.ZipUtils.compressFolder
@@ -24,15 +23,12 @@ class BackupViewModel : ViewModel() {
     private val _state = MutableStateFlow(BackupState())
     val backupState: StateFlow<BackupState> = _state
     // Paths for the folders
-    private val whatsappPath = Environment.getExternalStorageDirectory().path +
-            whatsapp_folder_path
-    private val backupPath = Environment.getExternalStoragePublicDirectory(
-        Environment.DIRECTORY_DOCUMENTS
-    ).path + "/WhatsAppTransfer/backup.zip"
+    private val sourceDir = FileUtils.getWhatsAppFolderPath()
+    private val backupFile = FileUtils.getDestinationBackupFile()
 
     init {
         _state.value = _state.value.copy(
-            folderSize = getFolderSize(whatsappPath),
+            folderSize = getFolderSize(sourceDir),
             freeSpace = getFreeSpace()
         )
 
@@ -43,8 +39,8 @@ class BackupViewModel : ViewModel() {
         viewModelScope.launch (Dispatchers.IO) {
             _state.value = _state.value.copy(isCompressing = true)
             compressFolder(
-                sourcePath = whatsappPath,
-                destinationPath = backupPath,
+                sourceDir = sourceDir,
+                destinationFile = backupFile,
                 onProgress = { progress ->
                     _state.value = _state.value.copy(progress = progress)
                 }

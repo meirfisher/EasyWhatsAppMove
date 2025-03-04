@@ -13,22 +13,21 @@ import java.util.zip.ZipInputStream
 object ZipUtils {
 
     // Function to compress a folder and save it to a zip file, with progress updates
-    fun compressFolder(sourcePath: String, destinationPath: String, onProgress: (Float) -> Unit) {
-        val sourceFolder = File(sourcePath)
-        val totalSize = getFolderSize(sourcePath)
+    fun compressFolder(sourceDir: File, destinationFile: File, onProgress: (Float) -> Unit) {
+        val totalSize = getFolderSize(sourceDir)
         if (totalSize == 0L) {
-            Log.d("Zip", "Empty folder or doesn't exist $sourcePath")
+            Log.d("Zip", "Empty folder or doesn't exist ${sourceDir.path}")
             return
         } // Exit if the folder is empty or doesn't exist
 
-        val destFile = File(destinationPath)
+        val destFile = destinationFile
         destFile.parentFile?.mkdirs()
 
         var processedBytes = 0L
         ZipOutputStream(FileOutputStream(destFile)).use { zipOut ->
-            sourceFolder.walk().forEach { file ->
+            sourceDir.walk().forEach { file ->
                 if (file.isFile) {
-                    val relativePath = file.relativeTo(sourceFolder).path
+                    val relativePath = file.relativeTo(sourceDir).path
                     zipOut.putNextEntry(ZipEntry(relativePath))
                     // Copy file content to the zip entry
                     file.inputStream().use { input ->
