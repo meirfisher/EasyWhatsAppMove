@@ -27,7 +27,7 @@ fun RestoreScreen(navController: NavController) {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let { viewModel.setBackupFile(context, it) }
+        uri?.let { viewModel.setBackupFile(it) }
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
@@ -40,7 +40,7 @@ fun RestoreScreen(navController: NavController) {
             if (state.isRestoring) {
                 LinearProgressIndicator(progress = { state.progress })
             } else {
-                Button(onClick = { viewModel.restoreFile() }) {
+                Button(onClick = { viewModel.restoreFile(context = context) }) {
                     Text("Restore")
                 }
             }

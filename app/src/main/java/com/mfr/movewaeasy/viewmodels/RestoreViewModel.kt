@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 
 class RestoreViewModel : ViewModel() {
 
@@ -36,7 +35,7 @@ class RestoreViewModel : ViewModel() {
             whatsapp_folder_path
 
     // Function to set and Update state with file details when selected.
-    fun setBackupFile(context: Context, uri: Uri) {
+    fun setBackupFile(uri: Uri) {
 
         _state.value = _state.value.copy(
             uri = uri,
@@ -61,13 +60,14 @@ class RestoreViewModel : ViewModel() {
     }
 
     // Function to start the restore process
-    fun restoreFile() {
+    fun restoreFile(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             val fileUri = _state.value.uri ?: return@launch // Exit if no file selected
             val fileSize = _state.value.fileSize
             _state.value = _state.value.copy(isRestoring = true)
             // Perform the restore logic here
             extractZip(
+                context = context,
                 sourceFile = fileUri,
                 totalSize = fileSize,
                 destinationPath = destPath,

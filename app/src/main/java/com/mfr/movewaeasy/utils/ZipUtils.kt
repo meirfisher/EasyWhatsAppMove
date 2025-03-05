@@ -1,5 +1,6 @@
 package com.mfr.movewaeasy.utils
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import java.io.File
@@ -88,27 +89,41 @@ object ZipUtils {
     }
 
     // Function to unzip the backup file, with progress updates
-    fun extractZip(sourceFile: Uri, totalSize: Long, destinationPath: String, onProgress: (Float) -> Unit) {
+    fun extractZip(context: Context, sourceFile: Uri, totalSize: Long, destinationPath: String, onProgress: (Float) -> Unit) {
         var processedBytes = 0L
-        ZipInputStream(FileInputStream(sourceFile)).use { zipIn ->
-            var entry: ZipEntry? = zipIn.nextEntry
-            while (entry != null) {
-                val destFile = File(destinationPath, entry.name)
-                if (entry.isDirectory) {
-                    destFile.mkdirs()
-                } else {
-                    destFile.parentFile?.mkdirs()
-                    FileOutputStream(destFile).use { output ->
-                        zipIn.copyTo(output)
+        try {
+            context.contentResolver.openInputStream(sourceFile)?.use { inputStream ->
+                ZipInputStream(inputStream).use { zipIn ->
+                    var entry: ZipEntry? = zipIn.nextEntry
+                    while (entry != null) {
+                        val destFile = File(destinationPath, entry.name)
+                        if (entry.isDirectory) {
+                            destFile.mkdirs()
+                        } else {
+                            // Make sure parent directories exist
+                            destFile.parentFile?.mkdirs()
+                            // Write the file content to the destination
+                            FileOutputStream(destFile).use { output ->
+                                val buffer = ByteArray(1024)
+                                var bytesRead: Int
+                                while (zipIn.read(buffer).also { bytesRead = it } > 0) {
+                                    output.write(buffer, 0, bytesRead)
+                                    processedBytes += bytesRead
+                                    val progress = processedBytes.toFloat() / totalSize
+                                    Log.d("Zip", "Extract Progress: $progress")
+                                    onProgress(progress)
+                                }
+                            }
+                        }
+
+                        zipIn.closeEntry()
+                        entry = zipIn.nextEntry
                     }
                 }
-                processedBytes += entry.size
-                val progress = processedBytes.toFloat() / totalSize
-                Log.d("Zip", "Extract Progress: $progress")
-                onProgress(progress)
-                zipIn.closeEntry()
-                entry = zipIn.nextEntry
-            }
+            } ?: throw Exception("Failed to open input stream for uri: $sourceFile")
+        } catch (e: Exception) {
+            Log.e("Zip", "Error extracting zip file", e)
+            throw e
         }
     }
 }
