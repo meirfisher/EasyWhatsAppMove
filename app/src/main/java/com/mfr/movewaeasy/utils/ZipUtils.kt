@@ -1,5 +1,6 @@
 package com.mfr.movewaeasy.utils
 
+import android.net.Uri
 import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
@@ -87,8 +88,7 @@ object ZipUtils {
     }
 
     // Function to unzip the backup file, with progress updates
-    fun extractZip(sourceFile: File, destinationPath: String, onProgress: (Float) -> Unit) {
-        val totalSize = sourceFile.length()
+    fun extractZip(sourceFile: Uri, totalSize: Long, destinationPath: String, onProgress: (Float) -> Unit) {
         var processedBytes = 0L
         ZipInputStream(FileInputStream(sourceFile)).use { zipIn ->
             var entry: ZipEntry? = zipIn.nextEntry
