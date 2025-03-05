@@ -61,4 +61,9 @@ object FileUtils {
     fun convertBytesToGB(bytes: Long): String {
         return "%.2f GB".format(bytes / GB)
     }
+
+    // Checks if file is Eligible for backup
+    fun File.isEligible(): Boolean {
+        return this.isFile && !this.isHidden
+    }
 }
