@@ -2,6 +2,7 @@ package com.mfr.movewaeasy.utils
 
 import android.os.Environment
 import android.os.StatFs
+import android.util.Log
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.format.DateTimeFormatter
 import java.io.File
@@ -11,7 +12,7 @@ object FileUtils {
     private const val GB = 1024f * 1024f * 1024f
     private const val WHATSAPP_FOLDER_PATH = "Android/media/com.whatsapp/WhatsApp"
     private const val BACKUP_FOLDER_PATH = "WhatsAppTransfer"
-    private val DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+    private val DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("ddMMyy_HHmmss")
 
     // Func to get the path to the WhatsApp folder
     fun getWhatsAppFolder(): File {
@@ -32,12 +33,27 @@ object FileUtils {
     }
 
     /**
-     * Generates a backup filename with the current date and time in "yyyyMMdd_HHmmss" format.
-     * Example output: "backup_20250304_143022.zip"
+     * Generates a backup filename with the current date and time in "ddMMyy_HHmmss" format.
+     * Example output: "backup_040325_143022.zip"
      */
     private fun getBackupFileName(): String {
         val dateTime = LocalDateTime.now().format(DATE_TIME_FORMAT)
         return "backup_$dateTime.zip"
+    }
+
+
+    /**
+     * Extract the timestamp from backup filename("backup_040325_143022.zip") to simple date-time string.
+     * Example output: "04/06/25 14:30:22"
+     */
+    fun getBackupFileTimestamp(string: String?): String {
+        Log.d("getBackupFileTimestamp", "String: \"$string\"")
+         return if (string != null) {
+             val dateTime = LocalDateTime.parse(string.substring(7, string.length - 4), DATE_TIME_FORMAT)
+             dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"))
+             } else {
+             ""
+         }
     }
 
     // Function to get the size of a folder in bytes

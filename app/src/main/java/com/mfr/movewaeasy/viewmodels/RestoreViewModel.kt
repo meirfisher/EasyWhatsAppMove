@@ -6,6 +6,7 @@ import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mfr.movewaeasy.utils.FileUtils
 import com.mfr.movewaeasy.utils.FileUtils.getWhatsAppFolder
 import com.mfr.movewaeasy.utils.ZipUtils.extractZip
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,7 @@ class RestoreViewModel : ViewModel() {
         val fileName: String? = null,
         val filePath: String? = null, // Null when until file is selected
         val fileSize: Long = 0L,
-        val creationTime: Long = 0L, // Milliseconds since epoch
+        val creationTime: String? = null,
         val progress: Float = 0f,
         val isRestoring: Boolean = false,
         val errorMessage: String? = null
@@ -44,7 +45,8 @@ class RestoreViewModel : ViewModel() {
         }
         _state.value = _state.value.copy(
             filePath = uri.path,
-            isFileSelected = true
+            isFileSelected = true,
+            creationTime = FileUtils.getBackupFileTimestamp(_state.value.fileName)
         )
         Log.d("set Backup Uri", "Content details: ${_state.value}")
     }
