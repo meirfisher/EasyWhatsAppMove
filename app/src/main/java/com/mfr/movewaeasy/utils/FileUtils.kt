@@ -2,8 +2,6 @@ package com.mfr.movewaeasy.utils
 
 import android.os.Environment
 import android.os.StatFs
-import android.util.Log
-import com.mfr.movewaeasy.R.string.whatsapp_folder_path
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.format.DateTimeFormatter
 import java.io.File

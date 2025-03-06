@@ -15,7 +15,7 @@ object PermissionUtils {
         android.Manifest.permission.READ_EXTERNAL_STORAGE,
         android.Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
-        const val PERMISSION_REQUEST_CODE = 100
+        private const val PERMISSION_REQUEST_CODE = 100
 
     /*
     / Function to check if the app has the required permissions

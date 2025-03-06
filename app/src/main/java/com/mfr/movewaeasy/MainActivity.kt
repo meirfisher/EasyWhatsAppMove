@@ -17,7 +17,6 @@ import com.mfr.movewaeasy.utils.PermissionUtils.hasPermissions
 class MainActivity : ComponentActivity() {
 
     // Check if the app has the required permissions
-    private val startDestination = if (hasPermissions(this)) "main" else "permission"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = startDestination
+                    startDestination = if (hasPermissions(this)) "main" else "permission"
                 ) {
                     composable("permission") {  PermissionScreen(navController)  }
                     composable("main") { MainScreen(navController) }

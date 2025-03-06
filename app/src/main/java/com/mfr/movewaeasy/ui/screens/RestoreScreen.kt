@@ -27,7 +27,7 @@ fun RestoreScreen(navController: NavController) {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let { viewModel.setBackupFile(it) }
+        uri?.let { viewModel.setBackupFile(uri = it, context = context) }
     }
 
     Column(modifier = Modifier.padding(16.dp)) {

@@ -2,17 +2,17 @@ package com.mfr.movewaeasy.viewmodels
 
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
+import android.provider.OpenableColumns
 import android.util.Log
-import androidx.core.net.toFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mfr.movewaeasy.R.string.whatsapp_folder_path
+import com.mfr.movewaeasy.utils.FileUtils.getWhatsAppFolder
 import com.mfr.movewaeasy.utils.ZipUtils.extractZip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 
 class RestoreViewModel : ViewModel() {
 
@@ -20,6 +20,7 @@ class RestoreViewModel : ViewModel() {
     data class RestoreState(
         val isFileSelected: Boolean = false,
         val uri: Uri? = null,
+        val fileName: String? = null,
         val filePath: String? = null, // Null when until file is selected
         val fileSize: Long = 0L,
         val creationTime: Long = 0L, // Milliseconds since epoch
@@ -30,27 +31,18 @@ class RestoreViewModel : ViewModel() {
     // Other UI state variables
     private val _state = MutableStateFlow(RestoreState())
     val state: StateFlow<RestoreState> = _state
-    // Paths for the folders
-    private val destPath = Environment.getExternalStorageDirectory().path +
-            whatsapp_folder_path
 
     // Function to set and Update state with file details when selected.
-    fun setBackupFile(uri: Uri) {
-
+    fun setBackupFile(uri: Uri, context: Context) {
         _state.value = _state.value.copy(
             uri = uri,
             filePath = uri.path,
-            fileSize = uri.toFile().length(),
-            creationTime = uri.toFile().lastModified()
         )
+        uri.getDetails(context = context)
+
         Log.d("Restore",
             "File Selected: ${_state.value.filePath}, " +
-                    "file size: ${_state.value.fileSize}, " +
-                    "creation time: ${
-                        _state.value.uri?.
-                        toFile()?.
-                        lastModified()
-                    }"
+                    "file size: ${_state.value.fileSize}, "
         )
         if (_state.value.fileSize <= 0) {
             _state.value = _state.value.copy(errorMessage = "Invalid file size")
@@ -64,8 +56,9 @@ class RestoreViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val fileUri = _state.value.uri ?: return@launch // Exit if no file selected
             val fileSize = _state.value.fileSize
+            val destPath = getWhatsAppFolder().absolutePath
             _state.value = _state.value.copy(isRestoring = true)
-            // Perform the restore logic here
+            // Extract the zip file
             extractZip(
                 context = context,
                 sourceFile = fileUri,
@@ -77,5 +70,26 @@ class RestoreViewModel : ViewModel() {
             )
             _state.value = _state.value.copy(isRestoring = false)
         }
+    }
+
+    private fun Uri.getDetails(context: Context) {
+
+        context.contentResolver.query(
+            this,
+            arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (cursor.moveToFirst()) {
+                _state.value = _state.value.copy(
+                    fileName = if (nameIndex != -1) cursor.getString(nameIndex) else null,
+                    fileSize = if (sizeIndex != -1) cursor.getLong(sizeIndex) else 0L
+                )
+            }
+        }
+        Log.d("Uri", "Content Details: ${_state.value}")
     }
 }
