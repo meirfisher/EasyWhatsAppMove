@@ -12,14 +12,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 
 class RestoreViewModel : ViewModel() {
 
     // Data classes for UI state
     data class RestoreState(
         val isFileSelected: Boolean = false,
-        val uri: Uri? = null,
         val fileName: String? = null,
         val filePath: String? = null, // Null when until file is selected
         val fileSize: Long = 0L,
@@ -32,29 +30,29 @@ class RestoreViewModel : ViewModel() {
     private val _state = MutableStateFlow(RestoreState())
     val state: StateFlow<RestoreState> = _state
 
+    private var restoreFileUri: Uri? = null
+
     // Function to set and Update state with file details when selected.
     fun setBackupFile(uri: Uri, context: Context) {
-        _state.value = _state.value.copy(
-            uri = uri,
-            filePath = uri.path,
-        )
+        restoreFileUri = uri
+
         uri.getDetails(context = context)
 
-        Log.d("Restore",
-            "File Selected: ${_state.value.filePath}, " +
-                    "file size: ${_state.value.fileSize}, "
-        )
         if (_state.value.fileSize <= 0) {
             _state.value = _state.value.copy(errorMessage = "Invalid file size")
             return
         }
-        _state.value = _state.value.copy(isFileSelected = true)
+        _state.value = _state.value.copy(
+            filePath = uri.path,
+            isFileSelected = true
+        )
+        Log.d("set Backup Uri", "Content details: ${_state.value}")
     }
 
     // Function to start the restore process
     fun restoreFile(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
-            val fileUri = _state.value.uri ?: return@launch // Exit if no file selected
+            val fileUri = restoreFileUri ?: return@launch // Exit if no file selected
             val fileSize = _state.value.fileSize
             val destPath = getWhatsAppFolder().absolutePath
             _state.value = _state.value.copy(isRestoring = true)
@@ -90,6 +88,5 @@ class RestoreViewModel : ViewModel() {
                 )
             }
         }
-        Log.d("Uri", "Content Details: ${_state.value}")
     }
 }
