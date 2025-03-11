@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 
@@ -15,7 +16,8 @@ object PermissionUtils {
         android.Manifest.permission.READ_EXTERNAL_STORAGE,
         android.Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
-        private const val PERMISSION_REQUEST_CODE = 100
+
+    private const val PERMISSION_REQUEST_CODE = 100
 
     /*
     / Function to check if the app has the required permissions
@@ -58,17 +60,9 @@ object PermissionUtils {
     fun requestManageExternalStoragePermission(activity: Activity) {
         try {
             val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-            intent.data = Uri.parse(
-                String.format(
-                    "package:%s",
-                    activity.packageName
-                )
-            )
             activity.startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
-            val fallBackIntent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-            activity.startActivity(fallBackIntent)
+            Log.e("ManageExternalStorage", "Exception: ${e.message}")
         }
     }
 
