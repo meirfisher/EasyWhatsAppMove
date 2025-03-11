@@ -3,90 +3,84 @@ package com.mfr.movewaeasy.utils
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import java.io.File
-import java.io.FileOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.isEligible
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.zip.CRC32
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 
 object ZipUtils {
 
+    // Buffer size 16KB
+    private const val BUFFER_SIZE = 16384
+
     // Function to compress a folder and save it to a zip file, with progress updates
-    fun compressFolder(sourceDir: File, destinationFile: File, onProgress: (Float) -> Unit) {
-        val totalSize = getFolderSize(sourceDir)
-        if (totalSize == 0L) {
-            Log.d("Zip", "Empty folder or doesn't exist ${sourceDir.path}")
-            return
-        } // Exit if the folder is empty or doesn't exist
+    suspend fun compressFolder(sourceDir: File, destinationFile: File, onProgress: (Float) -> Unit) {
+        try {
+            val totalSize = getFolderSize(sourceDir)
+            if (totalSize == 0L) {
+                Log.d("Zip", "Empty folder or doesn't exist ${sourceDir.path}")
+                return
+            } // Exit if the folder is empty or doesn't exist
 
-        val destFile = destinationFile
-        destFile.parentFile?.mkdirs()
+            val destFile = destinationFile
+            destFile.parentFile?.mkdirs()
 
-        var processedBytes = 0L
-        ZipOutputStream(FileOutputStream(destFile)).use { zipOut ->
-            sourceDir.walk().forEach { file ->
-                if (file.isEligible()) {
-                    val relativePath = file.relativeTo(sourceDir).path
-                    zipOut.putNextEntry(ZipEntry(relativePath))
-                    // Copy file content to the zip entry
-                    file.inputStream().use { input ->
-                        val buffer = ByteArray(1024)
-                        var bytesRead: Int
-                        while (input.read(buffer).also { bytesRead = it } > 0) {
-                            zipOut.write(buffer, 0, bytesRead)
+            var processedBytes = 0f
+            ZipOutputStream(BufferedOutputStream(FileOutputStream(destFile))).use { zipOut ->
+                sourceDir.walk().forEach { file ->
+                    if (file.isEligible()) {
+                        val relativePath = file.relativeTo(sourceDir).path
+                        zipOut.putNextEntry(ZipEntry(relativePath).apply {
+                            method = ZipOutputStream.STORED
+                            size = file.length()
+                            crc = file.calculateCrc32()
+                        })
+                        // Copy file content to the zip entry
+                        BufferedInputStream(file.inputStream()).use { input ->
+                            val buffer = ByteArray(BUFFER_SIZE)
+                            var bytesRead: Int
+                            while (input.read(buffer).also { bytesRead = it } != -1) {
+                                zipOut.write(buffer, 0, bytesRead)
+                                processedBytes += bytesRead
+                                val progress = (processedBytes / totalSize).coerceIn(0f, 1f)
+                                Log.d("Zip", "Progress: $progress")
+                                onProgress(progress)
+                            }
                         }
+                        zipOut.closeEntry()
                     }
-                    processedBytes += file.length()
-                    val progress = processedBytes.toFloat() / totalSize
-                    Log.d("Zip", "Progress: $progress")
-                    onProgress(progress)
-                    zipOut.closeEntry()
                 }
             }
+        } catch (e: Exception) {
+            Log.d("compressFolder", "Error compressing folder: ${e.message}")
         }
     }
 
     /*
-     * File extension function to compress a folder and save it to a zip file, with progress updates
+     * Calculate the CRC32 before adding the file to the ZIP
      */
-    suspend fun File.compressFolderTo(destinationFile: File, onProgress: (Float) -> Unit) = withContext(Dispatchers.IO) {
-        val totalSize = getFolderSize(this@compressFolderTo)
-        if (totalSize == 0L) {
-            Log.d("Zip", "Empty folder or doesn't exist ${this@compressFolderTo.path}")
-            return@withContext // Exit if the folder is empty or doesn't exist
-        }
-        // If the destination file doesn't exist, create it
-        destinationFile.parentFile?.mkdirs()
-
-        var processedBytes = 0L
-        ZipOutputStream(FileOutputStream(destinationFile)).use { zipOut ->
-            this@compressFolderTo.walk().forEach { file ->
-                if (file.isEligible()) {
-                    val relativePath = file.relativeTo(this@compressFolderTo).path
-                    zipOut.putNextEntry(ZipEntry(relativePath))
-                    // Copy file content to the zip entry
-                    file.inputStream().use { input ->
-                        val buffer = ByteArray(1024)
-                        var bytesRead: Int
-                        while (input.read(buffer).also { bytesRead = it } > 0) {
-                            zipOut.write(buffer, 0, bytesRead)
-                        }
-                    }
-                    processedBytes += file.length()
-                    val progress = processedBytes.toFloat() / totalSize
-                    Log.d("Zip", "Progress: $progress")
-                    onProgress(progress)
-                    zipOut.closeEntry()
-                }
+    private fun File.calculateCrc32(): Long {
+        val crc = CRC32()
+        BufferedInputStream(FileInputStream(this)).use { fis ->
+            val buffer = ByteArray(BUFFER_SIZE)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                crc.update(buffer, 0, bytesRead)
             }
         }
+        return crc.value
     }
+
 
     // Function to unzip the backup file, with progress updates
     fun extractZip(context: Context, sourceFile: Uri, totalSize: Long, destinationPath: String, onProgress: (Float) -> Unit) {
