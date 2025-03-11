@@ -42,7 +42,7 @@ class BackupViewModel : ViewModel() {
 
 
     fun startBackup() {
-        viewModelScope.launch (Dispatchers.IO) {
+         viewModelScope.launch (Dispatchers.IO) {
             _state.value = _state.value.copy(isCompressing = true)
             compressFolder(
                 sourceDir = sourceDir,

@@ -5,8 +5,7 @@ import android.net.Uri
 import android.util.Log
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.isEligible
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.mfr.movewaeasy.utils.FileUtils.size
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -46,6 +45,7 @@ object ZipUtils {
                             crc = file.calculateCrc32()
                         })
                         // Copy file content to the zip entry
+                        Log.d("Zip", "Adding file: ${file.relativeTo(sourceDir).path}, size: ${file.size()} ")
                         BufferedInputStream(file.inputStream()).use { input ->
                             val buffer = ByteArray(BUFFER_SIZE)
                             var bytesRead: Int
@@ -53,11 +53,12 @@ object ZipUtils {
                                 zipOut.write(buffer, 0, bytesRead)
                                 processedBytes += bytesRead
                                 val progress = (processedBytes / totalSize).coerceIn(0f, 1f)
-                                Log.d("Zip", "Progress: $progress")
+                                //Log.d("Zip", "Progress: $progress")
                                 onProgress(progress)
                             }
                         }
                         zipOut.closeEntry()
+                        Log.d("Zip", "Added file: ${file.name}")
                     }
                 }
             }

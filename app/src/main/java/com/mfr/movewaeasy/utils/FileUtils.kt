@@ -9,7 +9,9 @@ import java.io.File
 
 object FileUtils {
 
-    private const val GB = 1024f * 1024f * 1024f
+    private const val KB = 1024f
+    private const val MB = KB * KB
+    private const val GB = MB * KB
     private const val WHATSAPP_FOLDER_PATH = "Android/media/com.whatsapp/WhatsApp"
     private const val BACKUP_FOLDER_PATH = "WhatsAppTransfer"
     private val DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("ddMMyy_HHmmss")
@@ -72,8 +74,34 @@ object FileUtils {
     }
 
     // Convert bytes to a human-readable format GB
-    fun convertBytesToGB(bytes: Long): String {
-        return "%.2f GB".format(bytes / GB)
+    private fun Long.toStringGB(): String {
+        return "%.2f GB".format(this / GB)
+    }
+
+    private fun Long.toStringMB(): String {
+        return "%.2f MB".format(this / MB)
+    }
+
+    private fun Long.toStringKB(): String {
+        return "%.2f KB".format(this / KB)
+    }
+
+    fun Long.toStringSize(): String {
+        return if (this < MB) {
+            toStringKB()
+        } else if (this < GB) {
+            toStringMB()
+        } else {
+            toStringGB()
+        }
+    }
+
+    fun File.size(): String {
+        return if (this.isFile) {
+            this.length().toStringSize()
+        } else {
+            "Folder"
+        }
     }
 
     // Checks if file is Eligible for backup

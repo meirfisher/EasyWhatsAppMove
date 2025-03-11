@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.mfr.movewaeasy.utils.FileUtils.convertBytesToGB
+import com.mfr.movewaeasy.utils.FileUtils.toStringSize
 import com.mfr.movewaeasy.viewmodels.RestoreViewModel
 
 @Composable
@@ -35,7 +35,7 @@ fun RestoreScreen(navController: NavController) {
             Text("Select Backup File")
         }
         if (state.isFileSelected) {
-            Text("File Size: ${convertBytesToGB(state.fileSize)}")
+            Text("File Size: ${state.fileSize.toStringSize()}")
             Text("Creation Time: ${state.creationTime}")
             if (state.isRestoring) {
                 LinearProgressIndicator(progress = { state.progress })
