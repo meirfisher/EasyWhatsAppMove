@@ -98,7 +98,7 @@ object ZipUtils {
                             destFile.parentFile?.mkdirs()
                             // Write the file content to the destination
                             FileOutputStream(destFile).use { output ->
-                                val buffer = ByteArray(1024)
+                                val buffer = ByteArray(BUFFER_SIZE)
                                 var bytesRead: Int
                                 while (zipIn.read(buffer).also { bytesRead = it } > 0) {
                                     output.write(buffer, 0, bytesRead)
