@@ -18,6 +18,7 @@ class BackupViewModel : ViewModel() {
         val freeSpace: Long = 0L,
         val progress: Float = 0f, // 0 to 1
         val isCompressing: Boolean = false,
+        val isCalculatingSize: Boolean = false,
         val errorMessage: String? = null
     )
     private val _state = MutableStateFlow(BackupState())
@@ -28,10 +29,15 @@ class BackupViewModel : ViewModel() {
 
     init {
         _state.value = _state.value.copy(
-            folderSize = getFolderSize(sourceDir),
-            freeSpace = getFreeSpace()
+            freeSpace = getFreeSpace(),
+            isCalculatingSize = true
         )
-
+        viewModelScope.launch (Dispatchers.IO) {
+            _state.value = _state.value.copy(
+                folderSize = getFolderSize(sourceDir),
+                isCalculatingSize = false
+            )
+        }
     }
 
 
