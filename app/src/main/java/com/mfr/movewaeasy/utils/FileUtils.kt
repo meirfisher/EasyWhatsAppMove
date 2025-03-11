@@ -58,13 +58,23 @@ object FileUtils {
          }
     }
 
-    // Function to get the size of a folder in bytes
-    fun getFolderSize(file: File): Long {
-        return file
-            .walkTopDown()
-            .asSequence()
-            .filter { it.isFile && !it.isHidden }
-            .sumOf { it.length() }
+    /**
+     * Calculates the total size and file count of a folder.
+     * @param file The directory to analyze
+     * @return Pair containing total size in bytes (first) and number of files (second)
+     */
+    fun getFolderSize(file: File): Pair<Long, Long> {
+        require(file.isDirectory) {"Input must be a directory"}
+
+        var fileCounter: Long = 0
+        return Pair (
+            file.walkTopDown()
+                .filter { it.isFile && !it.isHidden }
+                .onEach { fileCounter++ }
+                .sumOf { it.length() },
+
+            fileCounter
+        )
     }
 
     // Function to get the free space on the device

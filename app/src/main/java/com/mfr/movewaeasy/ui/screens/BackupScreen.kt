@@ -45,8 +45,10 @@ fun BackupScreen(navController: NavController) {
         }
         if (state.isCompressing) {
             LinearProgressIndicator(
-                progress = { state.progress },
+                progress = { state.progress }
             )
+            Text("Backing up files...")
+            Text("Files Processed: ${state.fileOnProgress} out of ${state.filesCount}")
         } else {
             Button(onClick = { viewModel.startBackup() }) {
                 Text("Start Backup")

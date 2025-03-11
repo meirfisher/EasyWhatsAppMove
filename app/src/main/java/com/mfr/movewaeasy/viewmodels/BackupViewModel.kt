@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 class BackupViewModel : ViewModel() {
     data class BackupState(
         val folderSize: Long = 0L, // Bytes
+        val filesCount: Long = 0L,
+        val fileOnProgress: Long = 0L,
         val freeSpace: Long = 0L,
         val progress: Float = 0f, // 0 to 1
         val isCompressing: Boolean = false,
@@ -33,8 +35,10 @@ class BackupViewModel : ViewModel() {
             isCalculatingSize = true
         )
         viewModelScope.launch (Dispatchers.IO) {
+            val (totalSize, fileCount) = getFolderSize(sourceDir)
             _state.value = _state.value.copy(
-                folderSize = getFolderSize(sourceDir),
+                folderSize = totalSize,
+                filesCount = fileCount,
                 isCalculatingSize = false
             )
         }
@@ -49,6 +53,9 @@ class BackupViewModel : ViewModel() {
                 destinationFile = backupFile,
                 onProgress = { progress ->
                     _state.value = _state.value.copy(progress = progress)
+                },
+                fileCounter = { counter ->
+                    _state.value = _state.value.copy(fileOnProgress = counter)
                 }
             )
             _state.value = _state.value.copy(isCompressing = false)
