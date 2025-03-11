@@ -44,11 +44,18 @@ fun BackupScreen(navController: NavController) {
             Text("backup Size: ${state.folderSize.toStringSize()}")
         }
         if (state.isCompressing) {
+            Text("Backing up files...")
             LinearProgressIndicator(
                 progress = { state.progress }
             )
-            Text("Backing up files...")
             Text("Files Processed: ${state.fileOnProgress} out of ${state.filesCount}")
+
+            // A text box for showing the backup file path information
+            Text("Backup File Path: ${state.backupFilePath}")
+
+            if (state.errorMessage != null) {
+                Text("Error: ${state.errorMessage}")
+            }
         } else {
             Button(onClick = { viewModel.startBackup() }) {
                 Text("Start Backup")

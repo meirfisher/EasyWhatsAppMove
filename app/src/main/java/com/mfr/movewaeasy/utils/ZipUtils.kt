@@ -23,7 +23,13 @@ object ZipUtils {
     private const val BUFFER_SIZE = 16384
 
     // Function to compress a folder and save it to a zip file, with progress updates
-    suspend fun compressFolder(sourceDir: File, destinationFile: File, onProgress: (Float) -> Unit, fileCounter: (Long) -> Unit) {
+    fun compressFolder(
+        sourceDir: File,
+        destinationFile: File,
+        onProgress: (Float) -> Unit,
+        fileCounter: (Long) -> Unit,
+        filePath: (String?) -> Unit
+    ) {
         try {
             val totalSize = getFolderSize(sourceDir).first
             if (totalSize == 0L) {
@@ -61,6 +67,7 @@ object ZipUtils {
                         zipOut.closeEntry()
                         counter++
                         fileCounter(counter)
+                        filePath(file.relativeTo(sourceDir).path)
                         Log.d("Zip", "Added file: ${file.name}")
                     }
                 }

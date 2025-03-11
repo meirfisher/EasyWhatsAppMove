@@ -17,6 +17,7 @@ class BackupViewModel : ViewModel() {
         val folderSize: Long = 0L, // Bytes
         val filesCount: Long = 0L,
         val fileOnProgress: Long = 0L,
+        val backupFilePath: String? = null,
         val freeSpace: Long = 0L,
         val progress: Float = 0f, // 0 to 1
         val isCompressing: Boolean = false,
@@ -56,6 +57,9 @@ class BackupViewModel : ViewModel() {
                 },
                 fileCounter = { counter ->
                     _state.value = _state.value.copy(fileOnProgress = counter)
+                },
+                filePath = { path ->
+                    _state.value = _state.value.copy(backupFilePath = path)
                 }
             )
             _state.value = _state.value.copy(isCompressing = false)
