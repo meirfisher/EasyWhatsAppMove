@@ -1,8 +1,10 @@
 package com.mfr.movewaeasy.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,8 +28,11 @@ fun BackupScreen(navController: NavController) {
     val viewModel: BackupViewModel = viewModel()
     val state by viewModel.backupState.collectAsState()
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+    ) {
         Text("Free Space on Device: ${state.freeSpace.toStringSize()}")
+
         if (state.isCalculatingSize) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -44,22 +49,44 @@ fun BackupScreen(navController: NavController) {
             Text("backup Size: ${state.folderSize.toStringSize()}")
         }
         if (state.isCompressing) {
-            Text("Backing up files...")
-            LinearProgressIndicator(
-                progress = { state.progress }
-            )
-            Text("Files Processed: ${state.fileOnProgress} out of ${state.filesCount}")
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Text("Backing up files...")
 
-            // A text box for showing the backup file path information
-            Text("Backup File Path: ${state.backupFilePath}")
+                LinearProgressIndicator(
+                    progress = { state.progress },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = "Progress: ${(state.progress * 100).toInt()}%",
+                    modifier = Modifier.padding(top = 4.dp)
+                    )
 
-            if (state.errorMessage != null) {
-                Text("Error: ${state.errorMessage}")
+                Text("Files Processed: ${state.fileOnProgress} out of ${state.filesCount}")
+
+                // A text box for showing the backup file path information
+                Text("Backup File Path: ${state.backupFilePath}")
+
+                Button(
+                    onClick = { viewModel.cancelBackup() },
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Text("Cancel Backup")
+                }
             }
         } else {
-            Button(onClick = { viewModel.startBackup() }) {
+            Button(
+                onClick = { viewModel.startBackup() },
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
                 Text("Start Backup")
             }
+        }
+        state.errorMessage?.let {
+            Text(
+                text = it,
+                color = androidx.compose.ui.graphics.Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

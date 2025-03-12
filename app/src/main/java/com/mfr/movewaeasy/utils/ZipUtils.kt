@@ -6,6 +6,8 @@ import android.util.Log
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.isEligible
 import com.mfr.movewaeasy.utils.FileUtils.size
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -23,7 +25,7 @@ object ZipUtils {
     private const val BUFFER_SIZE = 16384
 
     // Function to compress a folder and save it to a zip file, with progress updates
-    fun compressFolder(
+    suspend fun compressFolder(
         sourceDir: File,
         destinationFile: File,
         onProgress: (Float) -> Unit,
@@ -44,6 +46,10 @@ object ZipUtils {
             var counter = 0L
             ZipOutputStream(BufferedOutputStream(FileOutputStream(destFile))).use { zipOut ->
                 sourceDir.walk().forEach { file ->
+                    if (!currentCoroutineContext().isActive) {
+                        Log.d("Zip", "Cancelled")
+                        throw Exception("Backup operation cancelled")
+                    }
                     if (file.isEligible()) {
                         val relativePath = file.relativeTo(sourceDir).path
                         zipOut.putNextEntry(ZipEntry(relativePath).apply {
@@ -57,6 +63,10 @@ object ZipUtils {
                             val buffer = ByteArray(BUFFER_SIZE)
                             var bytesRead: Int
                             while (input.read(buffer).also { bytesRead = it } != -1) {
+                                if (!currentCoroutineContext().isActive) {
+                                    Log.d("Zip", "Cancelled")
+                                    throw Exception("Backup operation cancelled")
+                                }
                                 zipOut.write(buffer, 0, bytesRead)
                                 processedBytes += bytesRead
                                 val progress = (processedBytes / totalSize).coerceIn(0f, 1f)
@@ -74,6 +84,10 @@ object ZipUtils {
             }
         } catch (e: Exception) {
             Log.d("compressFolder", "Error compressing folder: ${e.message}")
+            if (destinationFile.exists()) {
+                destinationFile.delete()
+            }
+            throw e
         }
     }
 

@@ -1,6 +1,7 @@
 package com.mfr.movewaeasy.viewmodels
 
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mfr.movewaeasy.utils.FileUtils
@@ -8,6 +9,7 @@ import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
 import com.mfr.movewaeasy.utils.ZipUtils.compressFolder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -30,6 +32,9 @@ class BackupViewModel : ViewModel() {
     private val sourceDir = FileUtils.getWhatsAppFolder()
     private val backupFile = FileUtils.getDestinationBackupFile()
 
+    // Job to track the backup process
+    private var backupJob: Job? = null
+
     init {
         _state.value = _state.value.copy(
             freeSpace = getFreeSpace(),
@@ -47,22 +52,47 @@ class BackupViewModel : ViewModel() {
 
 
     fun startBackup() {
-         viewModelScope.launch (Dispatchers.IO) {
+
+         backupJob = viewModelScope.launch (Dispatchers.IO) {
             _state.value = _state.value.copy(isCompressing = true)
-            compressFolder(
-                sourceDir = sourceDir,
-                destinationFile = backupFile,
-                onProgress = { progress ->
-                    _state.value = _state.value.copy(progress = progress)
-                },
-                fileCounter = { counter ->
-                    _state.value = _state.value.copy(fileOnProgress = counter)
-                },
-                filePath = { path ->
-                    _state.value = _state.value.copy(backupFilePath = path)
-                }
-            )
-            _state.value = _state.value.copy(isCompressing = false)
+             try {
+                compressFolder(
+                    sourceDir = sourceDir,
+                    destinationFile = backupFile,
+                    onProgress = { progress ->
+                        _state.value = _state.value.copy(progress = progress)
+                    },
+                    fileCounter = { counter ->
+                        _state.value = _state.value.copy(fileOnProgress = counter)
+                    },
+                    filePath = { path ->
+                        _state.value = _state.value.copy(backupFilePath = path)
+                    }
+                )
+             } catch (e: Exception) {
+                 Log.d("Backup", "Error compressing folder: ${e.message}")
+                 processStops(false, e.message)
+             }
+             processStops(true)
+        }
+    }
+
+    fun cancelBackup() {
+        backupJob?.cancel()
+        backupJob = null
+        processStops(false)
+    }
+
+    private fun processStops(inSocsess: Boolean, errorMessage: String? = null) {
+        _state.value = _state.value.copy(
+            isCompressing = false,
+            progress = 0f,
+            errorMessage =  if (inSocsess) null else "Backup failed or was cancelled: $errorMessage"
+        )
+        if (!inSocsess && backupFile.exists()) {
+            viewModelScope.launch(Dispatchers.IO) {
+                backupFile.delete()
+            }
         }
     }
 }
