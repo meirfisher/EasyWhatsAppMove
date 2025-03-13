@@ -83,9 +83,16 @@ object ZipUtils {
                 }
             }
         } catch (e: Exception) {
-            Log.d("compressFolder", "Error compressing folder: ${e.message}")
+            Log.e("compressFolder", "Error compressing folder: ${e.message}")
+
             if (destinationFile.exists()) {
-                destinationFile.delete()
+                try {
+                    val isDeleted = destinationFile.delete()
+                    Log.d("compressFolder", "Deleted partial file: $isDeleted")
+                }
+                catch (e: Exception) {
+                    Log.e("compressFolder", "Error deleting partial file: ${e.message}")
+                }
             }
             throw e
         }
@@ -108,13 +115,17 @@ object ZipUtils {
 
 
     // Function to unzip the backup file, with progress updates
-    fun extractZip(context: Context, sourceFile: Uri, totalSize: Long, destinationPath: String, onProgress: (Float) -> Unit) {
+    suspend fun extractZip(context: Context, sourceFile: Uri, totalSize: Long, destinationPath: String, onProgress: (Float) -> Unit) {
         var processedBytes = 0L
         try {
             context.contentResolver.openInputStream(sourceFile)?.use { inputStream ->
                 ZipInputStream(inputStream).use { zipIn ->
                     var entry: ZipEntry? = zipIn.nextEntry
                     while (entry != null) {
+                        if (!currentCoroutineContext().isActive) {
+                            Log.d("Zip", "Cancelled")
+                            throw Exception("Backup operation cancelled")
+                        }
                         val destFile = File(destinationPath, entry.name)
                         if (entry.isDirectory) {
                             destFile.mkdirs()
@@ -126,6 +137,10 @@ object ZipUtils {
                                 val buffer = ByteArray(BUFFER_SIZE)
                                 var bytesRead: Int
                                 while (zipIn.read(buffer).also { bytesRead = it } > 0) {
+                                    if (!currentCoroutineContext().isActive) {
+                                        Log.d("Zip", "Cancelled")
+                                        throw Exception("Backup operation cancelled")
+                                    }
                                     output.write(buffer, 0, bytesRead)
                                     processedBytes += bytesRead
                                     val progress = processedBytes.toFloat() / totalSize

@@ -51,8 +51,13 @@ object FileUtils {
     fun getBackupFileTimestamp(string: String?): String {
         Log.d("getBackupFileTimestamp", "String: \"$string\"")
          return if (string != null) {
-             val dateTime = LocalDateTime.parse(string.substring(7, string.length - 4), DATE_TIME_FORMAT)
-             dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"))
+             try {
+                 val dateTime = LocalDateTime.parse(string.substring(7, string.length - 4), DATE_TIME_FORMAT)
+                 dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"))
+             } catch (e: Exception) {
+                 Log.e("getBackupFileTimestamp", "Error in file name: ${e.message}")
+                 ""
+             }
              } else {
              ""
          }

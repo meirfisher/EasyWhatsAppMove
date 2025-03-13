@@ -81,6 +81,7 @@ fun BackupScreen(navController: NavController) {
                 Text("Start Backup")
             }
         }
+
         state.errorMessage?.let {
             Text(
                 text = it,

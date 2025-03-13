@@ -3,6 +3,7 @@ package com.mfr.movewaeasy.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
@@ -38,14 +39,41 @@ fun RestoreScreen(navController: NavController) {
             Text("File Size: ${state.fileSize.toStringSize()}")
             Text("Creation Time: ${state.creationTime}")
             if (state.isRestoring) {
-                LinearProgressIndicator(progress = { state.progress })
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    Text(
+                        text = "Progress: ${(state.progress * 100).toInt()}%",
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                    LinearProgressIndicator(
+                        progress = { state.progress },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text("Restoring...")
+                    Button(
+                        onClick = { viewModel.cancelRestore() },
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        Text("Cancel Restore")
+                    }
+                }
             } else {
-                Button(onClick = { viewModel.restoreFile(context = context) }) {
+                Button(
+                    onClick = { viewModel.restoreFile(context = context) },
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
                     Text("Restore")
                 }
             }
         } else {
             Text("File not selected or Bad file")
+        }
+
+        state.errorMessage?.let {
+            Text(
+                text = it,
+                color = androidx.compose.ui.graphics.Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

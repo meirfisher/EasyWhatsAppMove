@@ -9,6 +9,7 @@ import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
 import com.mfr.movewaeasy.utils.ZipUtils.compressFolder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +52,7 @@ class BackupViewModel : ViewModel() {
     }
 
 
+    @OptIn(InternalCoroutinesApi::class)
     fun startBackup() {
 
          backupJob = viewModelScope.launch (Dispatchers.IO) {
@@ -70,10 +72,16 @@ class BackupViewModel : ViewModel() {
                     }
                 )
              } catch (e: Exception) {
-                 Log.d("Backup", "Error compressing folder: ${e.message}")
+                 Log.e("Backup", "Error in backup process: ${e.message}")
                  processStops(false, e.message)
              }
-             processStops(true)
+        }
+        backupJob?.invokeOnCompletion(
+            onCancelling = true,
+            invokeImmediately = true
+        ) {
+            processStops(true)
+            Log.d("Backup", "Backup job completed successfully")
         }
     }
 
@@ -83,13 +91,13 @@ class BackupViewModel : ViewModel() {
         processStops(false)
     }
 
-    private fun processStops(inSocsess: Boolean, errorMessage: String? = null) {
+    private fun processStops(inSuccess: Boolean, errorMessage: String? = null) {
         _state.value = _state.value.copy(
             isCompressing = false,
             progress = 0f,
-            errorMessage =  if (inSocsess) null else "Backup failed or was cancelled: $errorMessage"
+            errorMessage =  if (inSuccess) null else "Backup failed or was cancelled: $errorMessage"
         )
-        if (!inSocsess && backupFile.exists()) {
+        if (!inSuccess && backupFile.exists()) {
             viewModelScope.launch(Dispatchers.IO) {
                 backupFile.delete()
             }
