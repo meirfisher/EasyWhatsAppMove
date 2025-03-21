@@ -30,8 +30,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("permission") {  PermissionScreen(navController)  }
                     composable("main") { MainScreen(navController) }
-                    composable("backup") { BackupScreen(navController) }
-                    composable("restore") { RestoreScreen(navController) }
+                    composable("backup") { BackupScreen() }
+                    composable("restore") { RestoreScreen() }
                 }
             }
         }

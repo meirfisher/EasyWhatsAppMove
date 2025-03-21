@@ -7,7 +7,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mfr.movewaeasy.utils.FileUtils
+import com.mfr.movewaeasy.utils.FileUtils.getPrependedFilesCount
 import com.mfr.movewaeasy.utils.FileUtils.getWhatsAppFolder
+import com.mfr.movewaeasy.utils.ZipUtils
 import com.mfr.movewaeasy.utils.ZipUtils.extractZip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -26,6 +28,9 @@ class RestoreViewModel : ViewModel() {
         val fileSize: Long = 0L,
         val creationTime: String? = null,
         val progress: Float = 0f,
+        val fileOnProgress: String? = null,
+        val filesRestoredCount: Long = 0L,
+        val filesTotalCount: Long? = 0L,
         val isRestoring: Boolean = false,
         val errorMessage: String? = null
     )
@@ -45,20 +50,21 @@ class RestoreViewModel : ViewModel() {
             uri.getDetails(context = context)
 
             if (!checkFileName()) {
-                Log.e("set Backup Uri", "Invalid file name")
+                Log.e("SetBackupUri", "Invalid file name")
                 _state.value = _state.value.copy(errorMessage = "Invalid file name")
                 return
             }
 
             if (_state.value.fileSize <= 0) {
-                Log.e("set Backup Uri", "Invalid file size")
+                Log.e("SetBackupUri", "Invalid file size")
                 _state.value = _state.value.copy(errorMessage = "Invalid file size")
                 return
             }
             _state.value = _state.value.copy(
                 filePath = uri.path,
                 isFileSelected = true,
-                creationTime = FileUtils.getBackupFileTimestamp(_state.value.fileName)
+                creationTime = FileUtils.getBackupFileTimestamp(_state.value.fileName),
+                filesTotalCount = uri.getPrependedFilesCount(context)
             )
             Log.d("set Backup Uri", "Content details: ${_state.value}")
         } catch (e: Exception) {
@@ -74,7 +80,7 @@ class RestoreViewModel : ViewModel() {
             val fileUri = restoreFileUri ?: return@launch // Exit if no file selected
             val fileSize = _state.value.fileSize
             try {
-                val destPath = getWhatsAppFolder().absolutePath
+                val destPath = getWhatsAppFolder().getOrThrow().absolutePath
                 _state.value = _state.value.copy(isRestoring = true)
                 // Extract the zip file
                 extractZip(
@@ -84,6 +90,12 @@ class RestoreViewModel : ViewModel() {
                     destinationPath = destPath,
                     onProgress = { progress ->
                         _state.value = _state.value.copy(progress = progress)
+                    },
+                    fileCounter = { counter ->
+                        _state.value = _state.value.copy(filesRestoredCount = counter)
+                    },
+                    filePath = { path ->
+                        _state.value = _state.value.copy(fileOnProgress = path)
                     }
                 )
             } catch (e: Exception) {

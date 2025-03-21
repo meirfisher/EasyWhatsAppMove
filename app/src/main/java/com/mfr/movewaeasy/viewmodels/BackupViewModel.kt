@@ -30,7 +30,7 @@ class BackupViewModel : ViewModel() {
     private val _state = MutableStateFlow(BackupState())
     val backupState: StateFlow<BackupState> = _state
     // Paths for the folders
-    private val sourceDir = FileUtils.getWhatsAppFolder()
+    private val sourceDir = FileUtils.getWhatsAppFolder().getOrThrow()
     private val backupFile = FileUtils.getDestinationBackupFile()
 
     // Job to track the backup process
@@ -61,6 +61,7 @@ class BackupViewModel : ViewModel() {
                 compressFolder(
                     sourceDir = sourceDir,
                     destinationFile = backupFile,
+                    totalFilesCount = _state.value.filesCount,
                     onProgress = { progress ->
                         _state.value = _state.value.copy(progress = progress)
                     },

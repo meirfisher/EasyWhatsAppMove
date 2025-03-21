@@ -28,10 +28,13 @@ object ZipUtils {
     suspend fun compressFolder(
         sourceDir: File,
         destinationFile: File,
+        totalFilesCount: Long,
         onProgress: (Float) -> Unit,
         fileCounter: (Long) -> Unit,
         filePath: (String?) -> Unit
     ) {
+        var processedBytes = 0f
+        var counter = 0L
         try {
             val totalSize = getFolderSize(sourceDir).first
             if (totalSize == 0L) {
@@ -39,12 +42,9 @@ object ZipUtils {
                 return
             } // Exit if the folder is empty or doesn't exist
 
-            val destFile = destinationFile
-            destFile.parentFile?.mkdirs()
+            destinationFile.parentFile?.mkdirs()
 
-            var processedBytes = 0f
-            var counter = 0L
-            ZipOutputStream(BufferedOutputStream(FileOutputStream(destFile))).use { zipOut ->
+            ZipOutputStream(BufferedOutputStream(FileOutputStream(destinationFile))).use { zipOut ->
                 sourceDir.walk().forEach { file ->
                     if (!currentCoroutineContext().isActive) {
                         Log.d("Zip", "Cancelled")
@@ -58,10 +58,14 @@ object ZipUtils {
                             crc = file.calculateCrc32()
                         })
                         // Copy file content to the zip entry
-                        Log.d("Zip", "Adding file: ${file.relativeTo(sourceDir).path}, size: ${file.size()} ")
+                        Log.d(
+                            "Zip",
+                            "Adding file: ${file.relativeTo(sourceDir).path}, size: ${file.size()} "
+                        )
                         BufferedInputStream(file.inputStream()).use { input ->
                             val buffer = ByteArray(BUFFER_SIZE)
                             var bytesRead: Int
+
                             while (input.read(buffer).also { bytesRead = it } != -1) {
                                 if (!currentCoroutineContext().isActive) {
                                     Log.d("Zip", "Cancelled")
@@ -83,7 +87,7 @@ object ZipUtils {
                 }
             }
         } catch (e: Exception) {
-            Log.e("compressFolder", "Error compressing folder: ${e.message}")
+            Log.e("compressFolder", "Error compressing folder: $e")
 
             if (destinationFile.exists()) {
                 try {
@@ -96,6 +100,12 @@ object ZipUtils {
             }
             throw e
         }
+        Log.d(
+            "compressFolder",
+            "Folder compressed successfully with path: ${destinationFile.path}, " +
+                    "size: ${destinationFile.length()}, " +
+                    "files: $counter"
+        )
     }
 
     /*
@@ -115,8 +125,17 @@ object ZipUtils {
 
 
     // Function to unzip the backup file, with progress updates
-    suspend fun extractZip(context: Context, sourceFile: Uri, totalSize: Long, destinationPath: String, onProgress: (Float) -> Unit) {
+    suspend fun extractZip(
+        context: Context,
+        sourceFile: Uri,
+        totalSize: Long,
+        destinationPath: String,
+        onProgress: (Float) -> Unit,
+        fileCounter: (Long) -> Unit,
+        filePath: (String?) -> Unit
+    ) {
         var processedBytes = 0L
+        var processedFiles = 0L
         try {
             context.contentResolver.openInputStream(sourceFile)?.use { inputStream ->
                 ZipInputStream(inputStream).use { zipIn ->
@@ -144,13 +163,16 @@ object ZipUtils {
                                     output.write(buffer, 0, bytesRead)
                                     processedBytes += bytesRead
                                     val progress = processedBytes.toFloat() / totalSize
-                                    Log.d("Zip", "Extract Progress: $progress")
+                                    //Log.d("Zip", "Extract Progress: $progress")
                                     onProgress(progress)
                                 }
                             }
                         }
-
                         zipIn.closeEntry()
+                        processedFiles++
+                        fileCounter(processedFiles)
+                        filePath(destFile.relativeTo(File(destinationPath)).path)
+                        Log.d("Zip", "Extracted file: ${destFile.name}")
                         entry = zipIn.nextEntry
                     }
                 }

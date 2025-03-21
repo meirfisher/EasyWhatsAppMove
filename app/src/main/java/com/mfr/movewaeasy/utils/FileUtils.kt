@@ -1,5 +1,7 @@
 package com.mfr.movewaeasy.utils
 
+import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
@@ -17,11 +19,16 @@ object FileUtils {
     private val DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("ddMMyy_HHmmss")
 
     // Func to get the path to the WhatsApp folder
-    fun getWhatsAppFolder(): File {
-        return File(
+    fun getWhatsAppFolder(): Result<File> {
+        val path = File(
             Environment.getExternalStorageDirectory(),
             WHATSAPP_FOLDER_PATH
         )
+        return if (path.exists() && path.isDirectory) {
+            Result.success(path)
+        } else {
+            Result.failure(Exception("WhatsApp folder not found"))
+        }
     }
 
     // Func to get the path to the destination backup file
@@ -102,12 +109,11 @@ object FileUtils {
     }
 
     fun Long.toStringSize(): String {
-        return if (this < MB) {
-            toStringKB()
-        } else if (this < GB) {
-            toStringMB()
-        } else {
-            toStringGB()
+        return when {
+            this >= GB -> this.toStringGB()
+            this >= MB -> this.toStringMB()
+            this >= KB -> this.toStringKB()
+            else -> "$this bytes"
         }
     }
 
@@ -122,5 +128,20 @@ object FileUtils {
     // Checks if file is Eligible for backup
     fun File.isEligible(): Boolean {
         return this.isFile && !this.isHidden
+    }
+
+    // Get the prepended files count for the zip file from Uri
+    fun Uri.getPrependedFilesCount(context: Context): Long {
+        try {
+            context.contentResolver.openInputStream(this)?.use { input ->
+                val reader = input.bufferedReader()
+                val line = reader.readLine() ?: return -1
+                Log.d("getPrependedFilesCount", "Line: $line")
+                return line.substringAfter("FileCount:").toLongOrNull() ?: -1
+            }
+        } catch (e: Exception) {
+            Log.e("getPrependedFilesCount", "Error getting prepended files count: ${e.message}")
+        }
+        return -1
     }
 }

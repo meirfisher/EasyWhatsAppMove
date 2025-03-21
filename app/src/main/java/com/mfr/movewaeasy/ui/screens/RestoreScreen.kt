@@ -4,23 +4,27 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.mfr.movewaeasy.utils.FileUtils.toStringSize
 import com.mfr.movewaeasy.viewmodels.RestoreViewModel
 
 @Composable
-fun RestoreScreen(navController: NavController) {
+fun RestoreScreen() {
     val context = LocalContext.current
     val viewModel: RestoreViewModel = viewModel()
     val state by viewModel.state.collectAsState()
@@ -36,6 +40,7 @@ fun RestoreScreen(navController: NavController) {
             Text("Select Backup File")
         }
         if (state.isFileSelected) {
+            Text("Selected File: ${state.fileName}")
             Text("File Size: ${state.fileSize.toStringSize()}")
             Text("Creation Time: ${state.creationTime}")
             if (state.isRestoring) {
@@ -49,6 +54,28 @@ fun RestoreScreen(navController: NavController) {
                         modifier = Modifier.fillMaxWidth()
                     )
                     Text("Restoring...")
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .padding(8.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Files restored: ${state.filesRestoredCount} of ${state.filesTotalCount}",
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Restoring ${state.fileOnProgress}",
+                                color = Color.White
+                            )
+                        }
+                    }
                     Button(
                         onClick = { viewModel.cancelRestore() },
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -65,15 +92,21 @@ fun RestoreScreen(navController: NavController) {
                 }
             }
         } else {
-            Text("File not selected or Bad file")
+            Text("please select a valid backup file")
         }
 
         state.errorMessage?.let {
             Text(
                 text = it,
-                color = androidx.compose.ui.graphics.Color.Red,
+                color = Color.Red,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RestoreScreenPreview() {
+    RestoreScreen()
 }
