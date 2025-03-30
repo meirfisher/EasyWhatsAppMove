@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.mfr.movewaeasy.R
+import com.mfr.movewaeasy.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,7 +106,7 @@ fun MainScreenContent(navController: NavController) {
     Column(modifier = Modifier.fillMaxSize()) {
         CardComponent(
             setCardData(
-                screen = "backup",
+                screenRoutes = Routes.BackupScreen,
                 navController = navController
             )
         )
@@ -114,7 +115,7 @@ fun MainScreenContent(navController: NavController) {
 
         CardComponent(
             setCardData(
-                screen = "restore",
+                screenRoutes = Routes.RestoreScreen,
                 navController = navController
             )
         )
@@ -172,20 +173,20 @@ fun CardComponent(cardData: CardData) {
     }
 }
 
-fun setCardData(screen: String, navController: NavController): CardData {
-    return when (screen) {
-        "backup" -> CardData(
+fun setCardData(screenRoutes: String, navController: NavController): CardData {
+    return when (screenRoutes) {
+        Routes.BackupScreen -> CardData(
             title = "I'm in my Old Device",
             description = "Create a backup of your WhatsApp media",
             buttonText = "Backup",
-            onClick = { navController.navigate("backup") },
+            onClick = { navController.navigate(screenRoutes) },
             iconID = R.drawable.ic_backup
         )
-        "restore" -> CardData(
+        Routes.RestoreScreen -> CardData(
             title = "I'm in my New Device",
             description = "Restore your WhatsApp media from a backup",
             buttonText = "Restore",
-            onClick = { navController.navigate("restore") },
+            onClick = { navController.navigate(screenRoutes) },
             iconID = R.drawable.ic_restore
         )
 

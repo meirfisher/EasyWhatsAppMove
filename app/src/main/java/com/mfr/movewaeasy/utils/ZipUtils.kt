@@ -43,13 +43,11 @@ object ZipUtils {
             } // Exit if the folder is empty or doesn't exist
 
             destinationFile.parentFile?.mkdirs()
+            addManifestToZip(destinationFile, totalFilesCount)
 
             ZipOutputStream(BufferedOutputStream(FileOutputStream(destinationFile))).use { zipOut ->
                 sourceDir.walk().forEach { file ->
-                    if (!currentCoroutineContext().isActive) {
-                        Log.d("Zip", "Cancelled")
-                        throw Exception("Backup operation cancelled")
-                    }
+                    checkIfCancelled("Compressing folder")
                     if (file.isEligible()) {
                         val relativePath = file.relativeTo(sourceDir).path
                         zipOut.putNextEntry(ZipEntry(relativePath).apply {
@@ -67,14 +65,10 @@ object ZipUtils {
                             var bytesRead: Int
 
                             while (input.read(buffer).also { bytesRead = it } != -1) {
-                                if (!currentCoroutineContext().isActive) {
-                                    Log.d("Zip", "Cancelled")
-                                    throw Exception("Backup operation cancelled")
-                                }
+                                checkIfCancelled("Compressing folder")
                                 zipOut.write(buffer, 0, bytesRead)
                                 processedBytes += bytesRead
                                 val progress = (processedBytes / totalSize).coerceIn(0f, 1f)
-                                //Log.d("Zip", "Progress: $progress")
                                 onProgress(progress)
                             }
                         }
@@ -108,21 +102,6 @@ object ZipUtils {
         )
     }
 
-    /*
-     * Calculate the CRC32 before adding the file to the ZIP
-     */
-    private fun File.calculateCrc32(): Long {
-        val crc = CRC32()
-        BufferedInputStream(FileInputStream(this)).use { fis ->
-            val buffer = ByteArray(BUFFER_SIZE)
-            var bytesRead: Int
-            while (fis.read(buffer).also { bytesRead = it } != -1) {
-                crc.update(buffer, 0, bytesRead)
-            }
-        }
-        return crc.value
-    }
-
 
     // Function to unzip the backup file, with progress updates
     suspend fun extractZip(
@@ -141,10 +120,7 @@ object ZipUtils {
                 ZipInputStream(inputStream).use { zipIn ->
                     var entry: ZipEntry? = zipIn.nextEntry
                     while (entry != null) {
-                        if (!currentCoroutineContext().isActive) {
-                            Log.d("Zip", "Cancelled")
-                            throw Exception("Backup operation cancelled")
-                        }
+                        checkIfCancelled("Extracting zip file")
                         val destFile = File(destinationPath, entry.name)
                         if (entry.isDirectory) {
                             destFile.mkdirs()
@@ -156,10 +132,7 @@ object ZipUtils {
                                 val buffer = ByteArray(BUFFER_SIZE)
                                 var bytesRead: Int
                                 while (zipIn.read(buffer).also { bytesRead = it } > 0) {
-                                    if (!currentCoroutineContext().isActive) {
-                                        Log.d("Zip", "Cancelled")
-                                        throw Exception("Backup operation cancelled")
-                                    }
+                                    checkIfCancelled("Extracting zip file")
                                     output.write(buffer, 0, bytesRead)
                                     processedBytes += bytesRead
                                     val progress = processedBytes.toFloat() / totalSize
@@ -181,5 +154,75 @@ object ZipUtils {
             Log.e("Zip", "Error extracting zip file", e)
             throw e
         }
+    }
+
+    // Check if the process is still active
+    private suspend fun checkIfCancelled(operation: String) {
+        if (!currentCoroutineContext().isActive) {
+            Log.d("Zip", "$operation cancelled")
+            throw Exception("$operation operation cancelled")
+        }
+    }
+
+    private fun addManifestToZip(zipFile: File, fileCount: Long) {
+        try {
+            ZipOutputStream(FileOutputStream(zipFile)).use { zipOut ->
+                val manifestContent = "{\n  \"fileCount\": $fileCount\n}"
+                val manifestEntry = ZipEntry("manifest.json")
+                manifestEntry.method = ZipEntry.STORED
+                manifestEntry.size = manifestContent.length.toLong()
+                manifestEntry.crc = CRC32().apply { update(manifestContent.toByteArray()) }.value
+                zipOut.putNextEntry(manifestEntry)
+                zipOut.write(manifestContent.toByteArray())
+                zipOut.closeEntry()
+                Log.d("addManifestToZip", "Manifest added to zip file")
+            }
+        } catch (e: Exception) {
+            Log.e("addManifestToZip", "Error adding manifest to zip file: ${e.message}")
+            throw e
+        }
+    }
+
+    fun readManifastFromZip(zipUri: Uri, context: Context): Long? {
+        Log.d("readManifastFromZip", "Reading manifest from zip file: $zipUri")
+        try {
+            context.contentResolver.openInputStream(zipUri)?.use { inputStream ->
+                ZipInputStream(BufferedInputStream(inputStream)).use { zipIn ->
+                    var entry: ZipEntry? = zipIn.nextEntry
+                    while (entry != null) {
+                        if (entry.name == "manifest.json") {
+                            val manifestContent = zipIn.bufferedReader().use { it.readText() }
+                            Log.d("readManifastFromZip", "Manifest content: $manifestContent")
+                            val regex = "\"fileCount\"\\s*:\\s*(\\d+)".toRegex()
+                            val matchResult = regex.find(manifestContent)
+                            val fileCount = matchResult?.groupValues?.get(1)?.toLongOrNull()
+                            Log.d("readManifastFromZip", "File count: $fileCount")
+                            return fileCount
+                    }
+                        entry = zipIn.nextEntry
+                    }
+                }
+            }
+        }catch (e: Exception) {
+            Log.e("readManifastFromZip", "Error reading manifest from zip file: ${e.message}")
+            throw e
+        }
+        Log.e("readManifastFromZip", "Manifest not found in zip file")
+        return 0L
+    }
+
+    /*
+     * Calculate the CRC32 before adding the file to the ZIP
+     */
+    private fun File.calculateCrc32(): Long {
+        val crc = CRC32()
+        BufferedInputStream(FileInputStream(this)).use { fis ->
+            val buffer = ByteArray(BUFFER_SIZE)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                crc.update(buffer, 0, bytesRead)
+            }
+        }
+        return crc.value
     }
 }

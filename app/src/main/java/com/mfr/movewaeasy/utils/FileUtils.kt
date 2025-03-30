@@ -31,6 +31,16 @@ object FileUtils {
         }
     }
 
+    fun getWhatsAppPath(): Pair<Boolean, String> {
+        val path = File(
+            Environment.getExternalStorageDirectory(),
+            WHATSAPP_FOLDER_PATH
+        )
+        return if (!path.exists()) {
+            Pair(false, path.absolutePath)
+        } else Pair(true, path.absolutePath + "-Backup")
+    }
+
     // Func to get the path to the destination backup file
     fun getDestinationBackupFile(): File {
         return File(
@@ -84,7 +94,6 @@ object FileUtils {
                 .filter { it.isFile && !it.isHidden }
                 .onEach { fileCounter++ }
                 .sumOf { it.length() },
-
             fileCounter
         )
     }
@@ -131,17 +140,17 @@ object FileUtils {
     }
 
     // Get the prepended files count for the zip file from Uri
-    fun Uri.getPrependedFilesCount(context: Context): Long {
-        try {
-            context.contentResolver.openInputStream(this)?.use { input ->
-                val reader = input.bufferedReader()
-                val line = reader.readLine() ?: return -1
-                Log.d("getPrependedFilesCount", "Line: $line")
-                return line.substringAfter("FileCount:").toLongOrNull() ?: -1
-            }
-        } catch (e: Exception) {
-            Log.e("getPrependedFilesCount", "Error getting prepended files count: ${e.message}")
-        }
-        return -1
-    }
+//    fun Uri.getPrependedFilesCount(context: Context): Long {
+//        try {
+//            context.contentResolver.openInputStream(this)?.use { input ->
+//                val reader = input.bufferedReader()
+//                val line = reader.readLine() ?: return -1
+//                Log.d("getPrependedFilesCount", "Line: $line")
+//                return line.substringAfter("FileCount:").toLongOrNull() ?: -1
+//            }
+//        } catch (e: Exception) {
+//            Log.e("getPrependedFilesCount", "Error getting prepended files count: ${e.message}")
+//        }
+//        return -1
+//    }
 }

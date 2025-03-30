@@ -7,8 +7,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mfr.movewaeasy.utils.FileUtils
-import com.mfr.movewaeasy.utils.FileUtils.getPrependedFilesCount
 import com.mfr.movewaeasy.utils.FileUtils.getWhatsAppFolder
+import com.mfr.movewaeasy.utils.FileUtils.getWhatsAppPath
 import com.mfr.movewaeasy.utils.ZipUtils
 import com.mfr.movewaeasy.utils.ZipUtils.extractZip
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +27,8 @@ class RestoreViewModel : ViewModel() {
         val filePath: String? = null, // Null when until file is selected
         val fileSize: Long = 0L,
         val creationTime: String? = null,
+        val isWhatsappFolderFound: Boolean = false,
+        val restoreDestination: String? = null,
         val progress: Float = 0f,
         val fileOnProgress: String? = null,
         val filesRestoredCount: Long = 0L,
@@ -44,32 +46,40 @@ class RestoreViewModel : ViewModel() {
 
     // Function to set and Update state with file details when selected.
     fun setBackupFile(uri: Uri, context: Context) {
-        try {
-            restoreFileUri = uri
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                restoreFileUri = uri
 
-            uri.getDetails(context = context)
+                uri.getDetails(context = context)
 
-            if (!checkFileName()) {
-                Log.e("SetBackupUri", "Invalid file name")
-                _state.value = _state.value.copy(errorMessage = "Invalid file name")
-                return
+                if (!checkFileName()) {
+                    Log.e("SetBackupUri", "Invalid file name")
+                    _state.value = _state.value.copy(errorMessage = "Invalid file name")
+                    return@launch
+                }
+
+                if (_state.value.fileSize <= 0) {
+                    Log.e("SetBackupUri", "Invalid file size")
+                    _state.value = _state.value.copy(errorMessage = "Invalid file size")
+                    return@launch
+                }
+                val destPath = getWhatsAppPath()
+                _state.value = _state.value.copy(
+                    filePath = uri.path,
+                    isFileSelected = true,
+                    creationTime = FileUtils.getBackupFileTimestamp(_state.value.fileName),
+                    filesTotalCount = ZipUtils.readManifastFromZip(uri, context),
+                    isWhatsappFolderFound = destPath.first,
+                    restoreDestination = destPath.second
+                )
+                if (getWhatsAppPath().first) {
+                    _state.value = _state.value.copy(isWhatsappFolderFound = true)
+                }
+                Log.d("set Backup Uri", "Content details: ${_state.value}")
+            } catch (e: Exception) {
+                Log.e("set Backup Uri", "Error setting backup file: ${e.message}")
+                _state.value = _state.value.copy(errorMessage = e.message)
             }
-
-            if (_state.value.fileSize <= 0) {
-                Log.e("SetBackupUri", "Invalid file size")
-                _state.value = _state.value.copy(errorMessage = "Invalid file size")
-                return
-            }
-            _state.value = _state.value.copy(
-                filePath = uri.path,
-                isFileSelected = true,
-                creationTime = FileUtils.getBackupFileTimestamp(_state.value.fileName),
-                filesTotalCount = uri.getPrependedFilesCount(context)
-            )
-            Log.d("set Backup Uri", "Content details: ${_state.value}")
-        } catch (e: Exception) {
-            Log.e("set Backup Uri", "Error setting backup file: ${e.message}")
-            _state.value = _state.value.copy(errorMessage = e.message)
         }
     }
 
@@ -79,8 +89,8 @@ class RestoreViewModel : ViewModel() {
         restoreJob = viewModelScope.launch(Dispatchers.IO) {
             val fileUri = restoreFileUri ?: return@launch // Exit if no file selected
             val fileSize = _state.value.fileSize
+            val destPath = _state.value.restoreDestination ?: return@launch
             try {
-                val destPath = getWhatsAppFolder().getOrThrow().absolutePath
                 _state.value = _state.value.copy(isRestoring = true)
                 // Extract the zip file
                 extractZip(

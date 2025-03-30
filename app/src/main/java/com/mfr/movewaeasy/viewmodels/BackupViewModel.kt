@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.mfr.movewaeasy.utils.FileUtils
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
+import com.mfr.movewaeasy.utils.ZipUtils
 import com.mfr.movewaeasy.utils.ZipUtils.compressFolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -58,7 +59,7 @@ class BackupViewModel : ViewModel() {
          backupJob = viewModelScope.launch (Dispatchers.IO) {
             _state.value = _state.value.copy(isCompressing = true)
              try {
-                compressFolder(
+                ZipUtils.compressFolder(
                     sourceDir = sourceDir,
                     destinationFile = backupFile,
                     totalFilesCount = _state.value.filesCount,

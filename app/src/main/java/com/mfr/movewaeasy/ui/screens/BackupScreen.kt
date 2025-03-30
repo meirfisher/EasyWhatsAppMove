@@ -57,7 +57,7 @@ fun BackupScreen() {
                 .fillMaxWidth()
                 .padding(8.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.White)
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -74,7 +74,7 @@ fun BackupScreen() {
                             fontFamily = FontFamily.SansSerif,
                             fontWeight = FontWeight.Medium,
                             fontSize = 18.sp,
-                            color = androidx.compose.ui.graphics.Color.Magenta
+                            color = Color.Magenta
                         )
                     )
                 }
@@ -152,7 +152,7 @@ fun BackupScreen() {
         } else {
             Button(
                 onClick = { viewModel.startBackup() },
-                modifier = Modifier.padding(vertical = 8.dp),
+                modifier = Modifier.padding(vertical = 8.dp)
 
             ) {
                 Text("Start Backup")
