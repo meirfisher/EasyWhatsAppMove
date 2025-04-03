@@ -109,8 +109,8 @@ fun RestoreScreen() {
                     text = { Text("A WhatsApp folder was found. To avoid overwrite existing data, the data will be restored to \"WhatsApp-Backup\" folder. Are you sure you want to continue?") },
                     confirmButton = {
                         Button(onClick = {
-                            viewModel.restoreFile(context = context)
                             showConfirmationDialog.value = false
+                            viewModel.restoreFile(context = context)
                         }) {
                             Text("Confirm")
                         }
