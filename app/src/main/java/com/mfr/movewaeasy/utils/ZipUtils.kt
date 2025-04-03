@@ -6,8 +6,10 @@ import android.util.Log
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.isEligible
 import com.mfr.movewaeasy.utils.FileUtils.size
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -43,10 +45,10 @@ object ZipUtils {
             } // Exit if the folder is empty or doesn't exist
 
             destinationFile.parentFile?.mkdirs()
-            addManifestToZip(destinationFile, totalFilesCount)
 
             ZipOutputStream(BufferedOutputStream(FileOutputStream(destinationFile))).use { zipOut ->
-                sourceDir.walk().forEach { file ->
+                addManifestToZip(zipOut, totalFilesCount)
+                sourceDir.walk().filter { !it.isHidden }.forEach { file ->
                     checkIfCancelled("Compressing folder")
                     if (file.isEligible()) {
                         val relativePath = file.relativeTo(sourceDir).path
@@ -164,51 +166,56 @@ object ZipUtils {
         }
     }
 
-    private fun addManifestToZip(zipFile: File, fileCount: Long) {
+    private fun addManifestToZip(zipOut: ZipOutputStream, fileCount: Long) {
         try {
-            ZipOutputStream(FileOutputStream(zipFile)).use { zipOut ->
-                val manifestContent = "{\n  \"fileCount\": $fileCount\n}"
-                val manifestEntry = ZipEntry("manifest.json")
-                manifestEntry.method = ZipEntry.STORED
-                manifestEntry.size = manifestContent.length.toLong()
-                manifestEntry.crc = CRC32().apply { update(manifestContent.toByteArray()) }.value
-                zipOut.putNextEntry(manifestEntry)
-                zipOut.write(manifestContent.toByteArray())
-                zipOut.closeEntry()
-                Log.d("addManifestToZip", "Manifest added to zip file")
-            }
+            val manifestContent = """
+                FileCount: $fileCount
+            """.trimIndent()
+            val manifestEntry = ZipEntry("manifest.txt")
+            manifestEntry.method = ZipEntry.STORED
+            manifestEntry.size = manifestContent.length.toLong()
+            manifestEntry.crc = CRC32().apply { update(manifestContent.toByteArray()) }.value
+            zipOut.putNextEntry(manifestEntry)
+            zipOut.write(manifestContent.toByteArray(charset = Charsets.UTF_8))
+            zipOut.closeEntry()
+            Log.d("addManifestToZip", "Manifest added to zip file")
         } catch (e: Exception) {
             Log.e("addManifestToZip", "Error adding manifest to zip file: ${e.message}")
             throw e
         }
     }
 
-    fun readManifastFromZip(zipUri: Uri, context: Context): Long? {
+    suspend fun readManifastFromZip(zipUri: Uri, context: Context): Long? {
         Log.d("readManifastFromZip", "Reading manifest from zip file: $zipUri")
-        try {
-            context.contentResolver.openInputStream(zipUri)?.use { inputStream ->
-                ZipInputStream(BufferedInputStream(inputStream)).use { zipIn ->
-                    var entry: ZipEntry? = zipIn.nextEntry
-                    while (entry != null) {
-                        if (entry.name == "manifest.json") {
+        var fileCount: Long? = null
+        withContext(Dispatchers.IO) {
+            try {
+                context.contentResolver.openInputStream(zipUri)?.use { inputStream ->
+                    ZipInputStream(BufferedInputStream(inputStream)).use { zipIn ->
+                        val entry: ZipEntry? = zipIn.nextEntry
+                        if (entry != null && entry.name == "manifest.txt") {
                             val manifestContent = zipIn.bufferedReader().use { it.readText() }
                             Log.d("readManifastFromZip", "Manifest content: $manifestContent")
-                            val regex = "\"fileCount\"\\s*:\\s*(\\d+)".toRegex()
+                            val regex = Regex("FileCount: (\\d+)")
                             val matchResult = regex.find(manifestContent)
-                            val fileCount = matchResult?.groupValues?.get(1)?.toLongOrNull()
+                            fileCount = matchResult?.groupValues?.get(1)?.toLongOrNull()
                             Log.d("readManifastFromZip", "File count: $fileCount")
-                            return fileCount
-                    }
-                        entry = zipIn.nextEntry
+                        }
                     }
                 }
+            }catch (e: Exception) {
+                Log.e("readManifastFromZip", "Error reading manifest from zip file: ${e.message}", e)
+                throw e
             }
-        }catch (e: Exception) {
-            Log.e("readManifastFromZip", "Error reading manifest from zip file: ${e.message}")
-            throw e
         }
-        Log.e("readManifastFromZip", "Manifest not found in zip file")
-        return 0L
+
+        if (fileCount == null) {
+            Log.e("readManifastFromZip", "File count is null")
+            throw Exception("File count is null")
+        }
+
+        Log.d("readManifastFromZip", "File count return: $fileCount")
+        return fileCount
     }
 
     /*

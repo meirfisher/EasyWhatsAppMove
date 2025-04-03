@@ -74,7 +74,7 @@ class BackupViewModel : ViewModel() {
                     }
                 )
              } catch (e: Exception) {
-                 Log.e("Backup", "Error in backup process: ${e.message}")
+                 Log.e("Backup", "Error in backup process: ${e.message}", e)
                  processStops(false, e.message)
              }
         }

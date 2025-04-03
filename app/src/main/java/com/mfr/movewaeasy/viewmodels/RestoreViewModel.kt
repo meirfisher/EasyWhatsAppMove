@@ -16,6 +16,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class RestoreViewModel : ViewModel() {
@@ -38,7 +39,7 @@ class RestoreViewModel : ViewModel() {
     )
     // Other UI state variables
     private val _state = MutableStateFlow(RestoreState())
-    val state: StateFlow<RestoreState> = _state
+    val state: StateFlow<RestoreState> = _state.asStateFlow()
 
     private var restoreFileUri: Uri? = null
 
@@ -49,7 +50,6 @@ class RestoreViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 restoreFileUri = uri
-
                 uri.getDetails(context = context)
 
                 if (!checkFileName()) {
@@ -72,12 +72,9 @@ class RestoreViewModel : ViewModel() {
                     isWhatsappFolderFound = destPath.first,
                     restoreDestination = destPath.second
                 )
-                if (getWhatsAppPath().first) {
-                    _state.value = _state.value.copy(isWhatsappFolderFound = true)
-                }
                 Log.d("set Backup Uri", "Content details: ${_state.value}")
             } catch (e: Exception) {
-                Log.e("set Backup Uri", "Error setting backup file: ${e.message}")
+                Log.e("set Backup Uri", "Error setting backup file: ${e.message}", e)
                 _state.value = _state.value.copy(errorMessage = e.message)
             }
         }
@@ -156,7 +153,7 @@ class RestoreViewModel : ViewModel() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("getDetails", "Error getting details: ${e.message}")
+            Log.e("getDetails", "Error getting details: ${e.message}", e)
         }
     }
 

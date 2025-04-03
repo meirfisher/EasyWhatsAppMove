@@ -19,18 +19,18 @@ fun ScreenNavigation(context: Context) {
         val navController = rememberNavController()
         NavHost(
             navController = navController,
-            startDestination = if (hasPermissions(context)) Routes.HomeScreen else Routes.PermissionsScreen
+            startDestination = if (hasPermissions(context)) Routes.Home else Routes.Permissions
         ) {
-            composable(Routes.PermissionsScreen) {
+            composable(Routes.Permissions) {
                 PermissionScreen(navController)
             }
-            composable(Routes.HomeScreen) {
+            composable(Routes.Home) {
                 MainScreen(navController)
             }
-            composable(Routes.BackupScreen) {
+            composable(Routes.Backup) {
                 BackupScreen()
             }
-            composable(Routes.RestoreScreen) {
+            composable(Routes.Restore) {
                 RestoreScreen()
             }
         }
