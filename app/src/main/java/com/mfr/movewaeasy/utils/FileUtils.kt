@@ -1,7 +1,5 @@
 package com.mfr.movewaeasy.utils
 
-import android.content.Context
-import android.net.Uri
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
@@ -11,12 +9,12 @@ import java.io.File
 
 object FileUtils {
 
-    private const val KB = 1024f
-    private const val MB = KB * KB
-    private const val GB = MB * KB
-    private const val WHATSAPP_FOLDER_PATH = "Android/media/com.whatsapp/WhatsApp"
-    private const val BACKUP_FOLDER_PATH = "WhatsAppTransfer"
-    private val DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("ddMMyy_HHmmss")
+    private const val KB: Float = 1024f
+    private const val MB: Float = KB * KB
+    private const val GB: Float = MB * KB
+    private const val WHATSAPP_FOLDER_PATH: String = "Android/media/com.whatsapp/WhatsApp"
+    private const val BACKUP_FOLDER_NAME: String = "WhatsAppTransfer"
+    private val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("ddMMyy_HHmmss")
 
     // Func to get the path to the WhatsApp folder
     fun getWhatsAppFolder(): Result<File> {
@@ -45,7 +43,7 @@ object FileUtils {
     fun getDestinationBackupFile(): File {
         return File(
             Environment.getExternalStorageDirectory(),
-            BACKUP_FOLDER_PATH +
+            BACKUP_FOLDER_NAME +
                     File.separator +
                     getBackupFileName()
         )
@@ -136,7 +134,11 @@ object FileUtils {
 
     // Checks if file is Eligible for backup
     fun File.isEligible(): Boolean {
-        return this.isFile && !this.isHidden
+        return this.isFile &&
+                !this.isHidden &&
+                !this.name.endsWith(".tmp")  &&
+                !this.name.endsWith(".nomedia") &&
+                !this.name.endsWith(".chck")
     }
 
     // Get the prepended files count for the zip file from Uri
