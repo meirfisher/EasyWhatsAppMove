@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.jakewharton.threetenabp.AndroidThreeTen
+import com.mfr.movewaeasy.ui.theme.MoveWAEasyTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -13,7 +14,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         initializeThreeTen()
         setContent {
-            ScreenNavigation(context = this)
+            MoveWAEasyTheme {
+                ScreenNavigation(context = this)
+            }
         }
     }
 
