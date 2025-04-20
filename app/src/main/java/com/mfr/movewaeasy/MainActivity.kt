@@ -11,9 +11,17 @@ class MainActivity : ComponentActivity() {
  
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AndroidThreeTen.init(this)
+        initializeThreeTen()
         setContent {
             ScreenNavigation(context = this)
+        }
+    }
+
+    private fun initializeThreeTen() {
+        try {
+            AndroidThreeTen.init(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
