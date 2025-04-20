@@ -106,7 +106,7 @@ fun MainScreenContent(navController: NavController) {
     Column(modifier = Modifier.fillMaxSize()) {
         CardComponent(
             setCardData(
-                screenRoutes = Routes.BACKUP,
+                screenRoutes = Routes.BACKUP_SCREEN,
                 navController = navController
             )
         )
@@ -115,7 +115,7 @@ fun MainScreenContent(navController: NavController) {
 
         CardComponent(
             setCardData(
-                screenRoutes = Routes.RESTORE,
+                screenRoutes = Routes.RESTORE_SCREEN,
                 navController = navController
             )
         )
@@ -175,14 +175,14 @@ fun CardComponent(cardData: CardData) {
 
 fun setCardData(screenRoutes: String, navController: NavController): CardData {
     return when (screenRoutes) {
-        Routes.BACKUP -> CardData(
+        Routes.BACKUP_SCREEN -> CardData(
             title = "I'm in my Old Device",
             description = "Create a backup of your WhatsApp media",
             buttonText = "Backup",
             onClick = { navController.navigate(screenRoutes) },
             iconID = R.drawable.ic_backup
         )
-        Routes.RESTORE -> CardData(
+        Routes.RESTORE_SCREEN -> CardData(
             title = "I'm in my New Device",
             description = "Restore your WhatsApp media from a backup",
             buttonText = "Restore",

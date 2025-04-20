@@ -7,8 +7,6 @@ import com.jakewharton.threetenabp.AndroidThreeTen
 import com.mfr.movewaeasy.ui.theme.MoveWAEasyTheme
 
 class MainActivity : ComponentActivity() {
-
-    // Check if the app has the required permissions
  
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +22,7 @@ class MainActivity : ComponentActivity() {
         try {
             AndroidThreeTen.init(this)
         } catch (e: Exception) {
+            // Log error but don't crash; ThreeTenABP is critical for date-time operations
             e.printStackTrace()
         }
     }
