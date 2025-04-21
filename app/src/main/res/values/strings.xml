@@ -5,4 +5,15 @@
     <string name="whatsapp_folder_path">Android/media/com.whatsapp/WhatsApp</string>
     <string name="android11_permission_explanation">"For backup and restore operation you need to grant \'Allow access to manage all files\' permission. \nAfter granting permission, return to the app."</string>
     <string name="android10_permission_explanation">For backup and restore operation you need to grant Storage permissions</string>
+    <string name="app_title">Move WhatsApp Easy</string>
+    <string name="main_screen_title">Easy move\nyour WhatsApp data\nOffline</string>
+    <string name="main_screen_description">Create an offline backup of your WhatsApp media and restore it on another device</string>
+    <string name="backup_card_title">I\'m in my Old Device</string>
+    <string name="backup_card_description">Create a backup of your WhatsApp media</string>
+    <string name="ackup_card_button">Backup</string>
+    <string name="backup_icon_description">Backup Icon</string>
+    <string name="restore_icon_description">Restore Icon</string>
+    <string name="restore_card_title">I\'m in my New Device</string>
+    <string name="restore_card_description">Restore your WhatsApp media from a backup</string>
+    <string name="restore_card_button">Restore</string>
 </resources>

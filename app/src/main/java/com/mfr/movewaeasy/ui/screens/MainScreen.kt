@@ -3,7 +3,6 @@ package com.mfr.movewaeasy.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,27 +25,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.mfr.movewaeasy.R
 import com.mfr.movewaeasy.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavController = NavController(LocalContext.current)) {
-
+fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Move WhatsApp Easy",
+                        stringResource(R.string.app_title),
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -55,7 +54,8 @@ fun MainScreen(navController: NavController = NavController(LocalContext.current
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
-        }
+        },
+        modifier = modifier
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -73,69 +73,44 @@ fun MainScreen(navController: NavController = NavController(LocalContext.current
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Easy move\nyour WhatsApp data\nOffline",
+                text = stringResource(R.string.main_screen_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(18.dp),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             Text(
-                text = "Create an offline backup of your WhatsApp media and restore it on another device",
+                text = stringResource(R.string.main_screen_description),
                 fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(20.dp),
                 lineHeight = 24.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
-            Spacer(modifier = Modifier.padding(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                MainScreenContent(navController)
+                CardComponent(getCardData(Routes.BACKUP_SCREEN, navController))
+                CardComponent(getCardData(Routes.RESTORE_SCREEN, navController))
             }
         }
     }
 }
 
 @Composable
-fun MainScreenContent(navController: NavController) {
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        CardComponent(
-            setCardData(
-                screenRoutes = Routes.BACKUP_SCREEN,
-                navController = navController
-            )
-        )
-
-        Spacer(modifier = Modifier.padding(10.dp))
-
-        CardComponent(
-            setCardData(
-                screenRoutes = Routes.RESTORE_SCREEN,
-                navController = navController
-            )
-        )
-    }
-}
-
-@Composable
-fun CardComponent(cardData: CardData) {
-
-
+fun CardComponent(cardData: CardData, modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 6.dp
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
             modifier = Modifier
@@ -151,47 +126,21 @@ fun CardComponent(cardData: CardData) {
             Text(
                 text = cardData.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 4.dp)
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
             Icon(
                 painter = painterResource(id = cardData.iconID),
-                contentDescription = "Backup Icon",
+                contentDescription = stringResource(id = cardData.contentDescriptionID),
                 modifier = Modifier.size(48.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Button(
-                    onClick = cardData.onClick,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(cardData.buttonText)
-                }
+            Button(
+                onClick = cardData.onClick,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text(cardData.buttonText)
             }
-        }
-    }
-}
-
-fun setCardData(screenRoutes: String, navController: NavController): CardData {
-    return when (screenRoutes) {
-        Routes.BACKUP_SCREEN -> CardData(
-            title = "I'm in my Old Device",
-            description = "Create a backup of your WhatsApp media",
-            buttonText = "Backup",
-            onClick = { navController.navigate(screenRoutes) },
-            iconID = R.drawable.ic_backup
-        )
-        Routes.RESTORE_SCREEN -> CardData(
-            title = "I'm in my New Device",
-            description = "Restore your WhatsApp media from a backup",
-            buttonText = "Restore",
-            onClick = { navController.navigate(screenRoutes) },
-            iconID = R.drawable.ic_restore
-        )
-
-        else -> {
-            throw IllegalArgumentException("Invalid screen")
         }
     }
 }
@@ -201,11 +150,42 @@ data class CardData(
     val description: String,
     val buttonText: String,
     val onClick: () -> Unit,
-    val iconID: Int
+    val iconID: Int,
+    val contentDescriptionID: Int
 )
+
+@Composable
+fun getCardData(route: String, navController: NavController): CardData {
+    return when (route) {
+        Routes.BACKUP_SCREEN -> CardData(
+            title = stringResource(R.string.backup_card_title),
+            description = stringResource(R.string.backup_card_description),
+            buttonText = stringResource(R.string.ackup_card_button),
+            onClick = { navController.navigate(Routes.BACKUP_SCREEN) },
+            iconID = R.drawable.ic_backup,
+            contentDescriptionID = R.string.backup_icon_description
+        )
+        Routes.RESTORE_SCREEN -> CardData(
+            title = stringResource(R.string.restore_card_title),
+            description = stringResource(R.string.restore_card_description),
+            buttonText = stringResource(R.string.restore_card_button),
+            onClick = { navController.navigate(Routes.RESTORE_SCREEN) },
+            iconID = R.drawable.ic_restore,
+            contentDescriptionID = R.string.restore_icon_description
+        )
+        else -> CardData (
+            title = "Unknown",
+            description = "Unknown",
+            buttonText = "Unknown",
+            onClick = {},
+            iconID = R.drawable.ic_backup,
+            contentDescriptionID = R.string.backup_icon_description
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MainScreen()
+    MainScreen(navController = rememberNavController())
 }
