@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -36,119 +37,19 @@ import com.mfr.movewaeasy.viewmodels.BackupViewModel
 
 
 @Composable
-fun BackupScreen() {
-    val viewModel: BackupViewModel = viewModel()
+fun BackupScreen(viewModel: BackupViewModel = viewModel()) {
     val state by viewModel.backupState.collectAsState()
 
     Column(
         modifier = Modifier
-            .padding(16.dp)
             .fillMaxWidth()
-            .animateContentSize( // Add animation for size changes
-                animationSpec = tween(
-                    durationMillis = 300, // Increased duration for smoother animation
-                    easing = LinearEasing
-                )
-            ),
+            .padding(16.dp)
+            .animateContentSize(animationSpec = tween(durationMillis = 300)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Free Space Display with Icon
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Free Space on Device: ${state.freeSpace.toStringSize()}",
-                        style = TextStyle(
-                            fontFamily = FontFamily.SansSerif,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 18.sp,
-                            color = Color.Magenta
-                        )
-                    )
-                }
-            }
-            if (state.isCalculatingSize) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ){
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Calculating Backup file Size...")
-                }
-            } else {
-                Text("backup Size: ${state.folderSize.toStringSize()}")
-            }
-        }
+        StorageInfoCard(state)
         if (state.isCompressing) {
-            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                Text("Backing up files...")
-
-                LinearProgressIndicator(
-                    progress = { state.progress },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = "Progress: ${(state.progress * 100).toInt()}%",
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .padding(8.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Black)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Files Processed: ${state.fileOnProgress} out of ${state.filesCount}",
-                            style = TextStyle(
-                                fontFamily = FontFamily.SansSerif,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 18.sp,
-                                color = Color.White
-                            )
-                        )
-
-                        // A text box for showing the backup file path information
-                        Text(
-                            text = "Backup File Path: ${state.backupFilePath}",
-                            style = TextStyle(
-                                fontFamily = FontFamily.SansSerif,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 18.sp,
-                                color = Color.White
-                            )
-                        )
-                    }
-                }
-
-                Button(
-                    onClick = { viewModel.cancelBackup() },
-                    modifier = Modifier.padding(vertical = 8.dp).align(AbsoluteAlignment.Right)
-                ) {
-                    Text("Cancel Backup")
-                }
-            }
+            BackupProgress(state, onCancel = viewModel::cancelBackup)
         } else {
             Button(
                 onClick = { viewModel.startBackup() },
@@ -162,9 +63,100 @@ fun BackupScreen() {
         state.errorMessage?.let {
             Text(
                 text = it,
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 8.dp)
             )
+        }
+    }
+}
+
+@Composable
+private fun StorageInfoCard(state: BackupViewModel.BackupState) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Free Space on Device: ${state.freeSpace.toStringSize()}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (state.isCalculatingSize) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Calculating Backup file Size...", style = MaterialTheme.typography.bodyMedium)
+                }
+            } else {
+                Text("Backup Size: ${state.folderSize.toStringSize()}", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BackupProgress(state: BackupViewModel.BackupState, onCancel: () -> Unit) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text("Backing up files...", style = MaterialTheme.typography.bodyMedium)
+        LinearProgressIndicator(
+            progress = { state.progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+        )
+        Text(
+            "Progress: ${(state.progress * 100).toInt()}%",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+                .padding(vertical = 8.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Files Processed: ${state.fileOnProgress}/${state.filesCount}",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .padding(vertical = 8.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Text(
+                    text = "File in progress: ${state.backupFilePath ?: "N/A"}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+        Button(
+            onClick = onCancel,
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .align(Alignment.End)
+        ) {
+            Text("Cancel Backup")
         }
     }
 }
