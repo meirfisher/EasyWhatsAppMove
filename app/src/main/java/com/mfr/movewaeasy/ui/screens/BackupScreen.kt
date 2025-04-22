@@ -22,7 +22,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mfr.movewaeasy.utils.FileUtils.toStringSize
@@ -152,10 +151,4 @@ private fun BackupProgress(state: BackupViewModel.BackupState, onCancel: () -> U
             Text("Cancel Backup")
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BackupScreenPreview() {
-    BackupScreen()
 }
