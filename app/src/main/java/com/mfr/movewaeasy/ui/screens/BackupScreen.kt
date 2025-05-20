@@ -45,7 +45,8 @@ fun BackupScreen(viewModel: BackupViewModel = viewModel()) {
         } else {
             Button(
                 onClick = { viewModel.startBackup() },
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 8.dp),
+                enabled = state.readyToBackup
 
             ) {
                 Text("Start Backup")
@@ -83,7 +84,7 @@ private fun StorageInfoCard(state: BackupViewModel.BackupState) {
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Calculating Backup file Size...", style = MaterialTheme.typography.bodyMedium)
+                    Text("Calculating Backup file Size... pleas wait", style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
                 Text("Backup Size: ${state.folderSize.toStringSize()}", style = MaterialTheme.typography.bodyMedium)
