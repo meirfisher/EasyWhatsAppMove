@@ -29,6 +29,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.mfr.movewaeasy.R
+import com.mfr.movewaeasy.Routes
 import com.mfr.movewaeasy.utils.PermissionUtils.hasPermissions
 import com.mfr.movewaeasy.utils.PermissionUtils.isAndroid11OrAbove
 import com.mfr.movewaeasy.utils.PermissionUtils.readWritePermission
@@ -42,8 +43,8 @@ fun PermissionScreen(navController: NavController) {
 
     // Function to navigate to main screen
     fun navigateToMainScreen() {
-        navController.navigate("main") {
-            popUpTo("permission") { inclusive = true }
+        navController.navigate(Routes.HOME_SCREEN) {
+            popUpTo(Routes.PERMISSIONS_SCREEN) { inclusive = true }
         }
     }
 
