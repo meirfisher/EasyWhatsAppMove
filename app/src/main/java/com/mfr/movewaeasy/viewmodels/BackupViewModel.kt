@@ -8,7 +8,6 @@ import com.mfr.movewaeasy.utils.FileUtils
 import com.mfr.movewaeasy.utils.FileUtils.getFolderSize
 import com.mfr.movewaeasy.utils.FileUtils.getFreeSpace
 import com.mfr.movewaeasy.utils.ZipUtils
-import com.mfr.movewaeasy.utils.ZipUtils.compressFolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -40,13 +39,17 @@ class BackupViewModel : ViewModel() {
     private var backupJob: Job? = null
 
     init {
-        _state.value = _state.value.copy(
-            freeSpace = getFreeSpace()
-        )
-        // Calculate the size of the WhatsApp folder
-        sizeCalculating()
-        // Check if backup folder is larger than the free space on the device - 1 GB extra free space for safety
-        memoryChecks()
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.value = _state.value.copy(
+                freeSpace = getFreeSpace()
+            )
+            // Calculate the size of the WhatsApp folder
+            sizeCalculating()
+            Log.d("BackupViewModel.init", "Free Space: ${_state.value.freeSpace}, WhatsApp Folder Size: ${_state.value.folderSize}")
+            // Check if backup folder is larger than the free space on the device - 1 GB extra free space for safety
+            memoryChecks()
+            Log.d("BackupViewModel.init", "Ready to backup: ${_state.value.readyToBackup}")
+        }
     }
 
 
@@ -104,18 +107,20 @@ class BackupViewModel : ViewModel() {
     }
 
     private fun sizeCalculating() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _state.value = _state.value.copy(isCalculatingSize = true)
-            val (totalSize, fileCount) = getFolderSize(sourceDir)
-            _state.value = _state.value.copy(
-                folderSize = totalSize,
-                filesCount = fileCount,
-                isCalculatingSize = false,
-            )
-        }
+
+        _state.value = _state.value.copy(isCalculatingSize = true)
+        val (totalSize, fileCount) = getFolderSize(sourceDir)
+        _state.value = _state.value.copy(
+            folderSize = totalSize,
+            filesCount = fileCount,
+            isCalculatingSize = false,
+        )
+        Log.d("BackupViewModel.sizeCalculating", "Total Size: ${_state.value.folderSize}, File Count: ${_state.value.filesCount}")
     }
 
     private fun memoryChecks() {
+        Log.d("BackupViewModel.memoryChecks", "Free Space: ${_state.value.freeSpace}, WhatsApp Folder Size: ${_state.value.folderSize}")
+
         if (_state.value.folderSize > _state.value.freeSpace - GBYTE) {
             _state.value = _state.value.copy(
                 errorMessage = "Backup folder is larger than the free space on the device"
@@ -125,7 +130,7 @@ class BackupViewModel : ViewModel() {
             _state.value = _state.value.copy(
                 errorMessage = "WhatsApp folder is empty"
             )
-            Log.e("Backup", "WhatsApp folder is empty")
+            Log.e("BackupViewModel.memoryChecks", "WhatsApp folder is empty: Size: ${_state.value.folderSize}")
         } else {
             _state.value = _state.value.copy(
                 readyToBackup = true

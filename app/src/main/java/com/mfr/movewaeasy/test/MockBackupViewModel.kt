@@ -2,6 +2,7 @@ package com.mfr.movewaeasy.test
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlin.math.log10
 
 // Mock BackupViewModel and BackupState for preview purposes
 // Replace with your actual ViewModel and State
@@ -32,6 +33,7 @@ data class BackupState(
     val folderSize: Long = 0L,
     val isCalculatingSize: Boolean = true,
     val isCompressing: Boolean = false,
+    val readyToBackup: Boolean = false,
     val progress: Float = 0.0f,
     val filesCount: Int = 0,
     val fileOnProgress: Int = 0,
@@ -42,7 +44,7 @@ data class BackupState(
     fun Long.toStringSize(): String {
         if (this <= 0) return "0 B"
         val units = arrayOf("B", "KB", "MB", "GB", "TB")
-        val digitGroups = (Math.log10(this.toDouble()) / Math.log10(1024.0)).toInt()
+        val digitGroups = (log10(this.toDouble()) / Math.log10(1024.0)).toInt()
         return String.format("%.1f %s", this / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
     }
 }
