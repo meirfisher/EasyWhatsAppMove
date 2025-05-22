@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -84,7 +83,7 @@ fun BackupScreen(viewModel: BackupViewModel = viewModel()) {
             Spacer(modifier = Modifier.height(24.dp))
 
             if (state.isCompressing) {
-                BackupProgressSection(
+                BackupProgressCard(
                     state,
                     onCancel = viewModel::cancelBackup
                 )
@@ -160,81 +159,76 @@ private fun StorageInfoCard(state: BackupViewModel.BackupState) {
 }
 
 @Composable
-private fun InfoRow(label: String, value: String, highlightValue: Boolean = false) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant // Muted color for label
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (highlightValue) FontWeight.Bold else FontWeight.Normal,
-            color = if (highlightValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-private fun BackupProgressSection(state: BackupViewModel.BackupState, onCancel: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Backing up files...",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        Box(
+private fun BackupProgressCard(state: BackupViewModel.BackupState, onCancel: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) { // Column to hold Card and Button
+        Card(
             modifier = Modifier
-                .fillMaxWidth(0.9f) // Make progress bar slightly less than full width for aesthetics
-                .height(18.dp) // Increased height for thickness
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-        ) {
-            LinearProgressIndicator(
-                progress = { state.progress },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(CircleShape),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = Color.Transparent
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
             )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp), // Consistent padding
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
+                Text(
+                    "Backing up files...",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f) // Make progress bar slightly less than full width for aesthetics
+                        .height(18.dp) // Increased height for thickness
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                ) {
+                    LinearProgressIndicator(
+                        progress = { state.progress },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = Color.Transparent
+                    )
+                }
+
+                Text(
+                    "Progress: ${(state.progress * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 20.dp)
+                )
+
+                // files processed
+                InfoRow(
+                    label = "Files Processed",
+                    value = "${state.fileOnProgress}/${state.filesCount}"
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // For "Current File", we want it to have a fixed height and allow text to wrap or ellipsis
+                Box(modifier = Modifier.height(50.dp)) { // Fixed height for this row
+                    InfoRow(
+                        label = "Current File:",
+                        value = state.backupFilePath ?: "Preparing...",
+                        valueMaxLines = 2, // Allow up to 2 lines
+                        isPath = true // Indicate it's a path for alignment
+                    )
+                }
+            }
         }
+        Spacer(modifier = Modifier.height(28.dp)) // Space before the cancel button
 
-        Text(
-            "Progress: ${(state.progress * 100).toInt()}%",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(top = 12.dp, bottom = 20.dp)
-        )
-
-        // Card for files processed
-        ProgressDetailItem(
-            title = "Files Processed",
-            detail = "${state.fileOnProgress}/${state.filesCount}"
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Card for current file
-        ProgressDetailItem(
-            title = "Current File",
-            detail = state.backupFilePath ?: "Preparing...",
-            fixedHeight = true
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
+        // Cancel button
         StyledButton(
             onClick = onCancel,
             text = "Cancel Backup",
@@ -247,35 +241,34 @@ private fun BackupProgressSection(state: BackupViewModel.BackupState, onCancel: 
 }
 
 @Composable
-fun ProgressDetailItem(title: String, detail: String, fixedHeight: Boolean = false) {
-    val itemModifier = if (fixedHeight) {
-        Modifier
-            .fillMaxWidth()
-            .height(72.dp) // Fixed height for the "Current File" section
-            .padding(vertical = 8.dp, horizontal = 4.dp)
-    } else {
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 4.dp)
-    }
-
-    Column(
-        modifier = itemModifier,
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = if (fixedHeight) Arrangement.Center else Arrangement.Top // Center content vertically if fixed height
+private fun InfoRow(
+    label: String,
+    value: String,
+    highlightValue: Boolean = false,
+    valueMaxLines: Int = 1,
+    isPath: Boolean = false // To handle potentially long paths for value
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = if (isPath) Alignment.Top else Alignment.CenterVertically // Align top for paths
     ) {
         Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 2.dp)
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, // Muted color for label
+            modifier = if (isPath) Modifier.padding(top = 2.dp) else Modifier // Add padding if path
         )
+        Spacer(modifier = Modifier.width(8.dp)) // Space between label and value
         Text(
-            text = detail,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = if (fixedHeight) 2 else 3,
-            overflow = TextOverflow.Ellipsis
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = if (highlightValue) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (highlightValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            maxLines = valueMaxLines,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.End, // Align value to the end
+            modifier = Modifier.weight(1f) // Allow value to take remaining space
         )
     }
 }

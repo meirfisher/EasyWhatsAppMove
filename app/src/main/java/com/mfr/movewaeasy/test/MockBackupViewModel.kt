@@ -7,20 +7,20 @@ import kotlin.math.log10
 // Mock BackupViewModel and BackupState for preview purposes
 // Replace with your actual ViewModel and State
 class MockBackupViewModel {
-    val backupState = kotlinx.coroutines.flow.MutableStateFlow(BackupState())
+    val backupState1 = kotlinx.coroutines.flow.MutableStateFlow(BackupState1())
     fun startBackup() {
-        backupState.value = backupState.value.copy(isCompressing = true, progress = 0.1f, filesCount = 100, fileOnProgress = 10)
+        backupState1.value = backupState1.value.copy(isCompressing = true, progress = 0.1f, filesCount = 100, fileOnProgress = 10)
     }
     fun cancelBackup() {
-        backupState.value = backupState.value.copy(isCompressing = false, progress = 0f)
+        backupState1.value = backupState1.value.copy(isCompressing = false, progress = 0f)
     }
     @OptIn(DelicateCoroutinesApi::class)
     fun calculateSize() {
-        backupState.value = backupState.value.copy(isCalculatingSize = true, folderSize = 0)
+        backupState1.value = backupState1.value.copy(isCalculatingSize = true, folderSize = 0)
         // Simulate calculation
         kotlinx.coroutines.GlobalScope.launch { // Use a proper scope in real app
             kotlinx.coroutines.delay(2000)
-            backupState.value = backupState.value.copy(isCalculatingSize = false, folderSize = 1024L * 1024 * 500) // 500MB
+            backupState1.value = backupState1.value.copy(isCalculatingSize = false, folderSize = 1024L * 1024 * 500) // 500MB
         }
     }
     init {
